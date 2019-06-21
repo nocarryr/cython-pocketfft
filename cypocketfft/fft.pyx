@@ -1,0 +1,123 @@
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# distutils: language = c++
+# distutils: extra_compile_args = -std=c++11
+
+cimport cython
+
+from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy
+
+from cypocketfft cimport wrapper
+from cypocketfft.plancache cimport plan_cache
+
+import numpy as np
+
+cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+    cdef Py_ssize_t in_size = in_arr.shape[0]
+    cdef rfft_plan plan
+    if use_cache:
+        plan = plan_cache.get_rplan(in_size)
+    else:
+        plan = plan_cache._build_rplan(in_size)
+    cdef Py_ssize_t r = _rfft_with_plan(&plan, in_arr, out_arr, fct)
+    if use_cache and plan:
+        wrapper._destroy_rfft_plan(plan)
+    return r
+
+cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct) nogil except -1:
+    cdef Py_ssize_t in_size = in_arr.shape[0]
+    cdef Py_ssize_t out_size = in_size // 2 + 1
+    if out_arr.shape[0] < out_size:
+        with gil:
+            raise Exception('out_arr shape mismatch')
+
+    cdef void *in_ptr = &in_arr[0]
+    cdef void *out_ptr = &out_arr[0]
+
+    out_arr[out_size-1].imag = 0
+    memcpy(<char *>out_ptr+sizeof(double), in_ptr, in_size*sizeof(double))
+
+    cdef double *out_ptr_dbl = <double *>out_ptr
+    r = wrapper._rfft_forward(plan[0], out_ptr_dbl+1, fct)
+    if r == 0:
+        out_arr[0].real = out_arr[0].imag
+        out_arr[0].imag = 0
+    if r != 0:
+        with gil:
+            raise MemoryError()
+    return out_size
+
+cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+    cdef Py_ssize_t in_size = in_arr.shape[0]
+    cdef Py_ssize_t length = (in_size-1) * 2
+    cdef rfft_plan plan
+    if use_cache:
+        plan = plan_cache.get_rplan(length)
+    else:
+        plan = plan_cache._build_rplan(length)
+    r = _irfft_with_plan(&plan, in_arr, out_arr, fct)
+    if use_cache and plan:
+        wrapper._destroy_rfft_plan(plan)
+    return r
+
+cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct) nogil except -1:
+    cdef Py_ssize_t in_size = in_arr.shape[0]
+    cdef Py_ssize_t length = (in_size-1) * 2
+    if out_arr.shape[0] < length:
+        with gil:
+            raise Exception('out_arr shape mismatch')
+    cdef void *in_ptr = &in_arr[0]
+    cdef void *out_ptr = &out_arr[0]
+
+    memcpy(<char *>out_ptr+sizeof(double), <char *>in_ptr + (sizeof(double)*2), (length-1)*sizeof(double))
+    out_arr[0] = in_arr[0].real
+
+    cdef double *out_ptr_dbl = <double *>out_ptr
+    r = wrapper._rfft_backward(plan[0], out_ptr_dbl, fct)
+    if r != 0:
+        with gil:
+            raise MemoryError()
+    return length
+
+
+def rfft(REAL_ft[:] in_arr, fct=None):
+    if fct is None:
+        fct = 1.0
+    in_size = in_arr.shape[0]
+    out_arr = np.empty(in_size // 2 + 1, dtype=np.complex128)
+    out_size = _rfft(in_arr, out_arr, fct)
+    assert out_size == out_arr.size
+    return out_arr
+
+def irfft(COMPLEX_ft[:] in_arr, fct=None):
+    in_size = in_arr.shape[0]
+    out_size = (in_size-1) * 2
+    if fct is None:
+        fct = <double>(1 / <double>out_size)
+    out_arr = np.empty(out_size, dtype=np.float64)
+    _irfft(in_arr, out_arr, fct)
+    return out_arr
+
+def test(N=32, reps=1):
+    import time
+    t = np.linspace(0., 1., N)
+    fc = 6000.
+    x = np.sin(2*np.pi*fc*t)
+    ff = np.empty(N // 2 + 1, dtype=np.complex128)
+    start_ts = time.time()
+    for i in range(reps):
+        _rfft(x, ff, 1.0)
+    end_ts = time.time()
+    dur = end_ts - start_ts
+    percall = dur / float(reps)
+    print('duration={}, percall={}'.format(dur, percall))
+
+    npff = np.fft.rfft(x)
+    assert np.allclose(ff, npff)
+
+    iff = irfft(ff)
+    npiff = np.fft.irfft(ff)
+    assert np.allclose(iff, npiff)
+    assert np.allclose(iff, x)
+
+    return x, ff, iff
