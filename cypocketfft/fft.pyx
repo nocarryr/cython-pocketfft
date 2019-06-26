@@ -38,7 +38,7 @@ cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint
     else:
         plan = plan_cache._build_rplan(in_size)
     cdef Py_ssize_t r = _rfft_with_plan(&plan, in_arr, out_arr, fct)
-    if use_cache and plan:
+    if not use_cache and plan != NULL:
         wrapper._destroy_rfft_plan(plan)
     return r
 
@@ -74,7 +74,7 @@ cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bin
     else:
         plan = plan_cache._build_rplan(length)
     r = _irfft_with_plan(&plan, in_arr, out_arr, fct)
-    if use_cache and plan:
+    if not use_cache and plan != NULL:
         wrapper._destroy_rfft_plan(plan)
     return r
 
