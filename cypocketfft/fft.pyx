@@ -114,27 +114,3 @@ def irfft(COMPLEX_ft[:] in_arr, fct=None):
     out_arr = np.empty(out_size, dtype=np.float64)
     _irfft(in_arr, out_arr, fct)
     return out_arr
-
-def test(N=32, reps=1):
-    import time
-    t = np.linspace(0., 1., N)
-    fc = 6000.
-    x = np.sin(2*np.pi*fc*t)
-    ff = np.empty(N // 2 + 1, dtype=np.complex128)
-    start_ts = time.time()
-    for i in range(reps):
-        _rfft(x, ff, 1.0)
-    end_ts = time.time()
-    dur = end_ts - start_ts
-    percall = dur / float(reps)
-    print('duration={}, percall={}'.format(dur, percall))
-
-    npff = np.fft.rfft(x)
-    assert np.allclose(ff, npff)
-
-    iff = irfft(ff)
-    npiff = np.fft.irfft(ff)
-    assert np.allclose(iff, npiff)
-    assert np.allclose(iff, x)
-
-    return x, ff, iff
