@@ -12,6 +12,24 @@ from cypocketfft.plancache cimport plan_cache
 
 import numpy as np
 
+cdef size_t _rfft_length(REAL_ft[:] in_arr) nogil except -1:
+    cdef size_t in_size = in_arr.shape[0]
+    cdef size_t length = in_size // 2 + 1
+    return length
+
+def rfft_length(REAL_ft[:] in_arr):
+    return _rfft_length(in_arr)
+
+
+cdef size_t _irfft_length(COMPLEX_ft[:] in_arr) nogil except -1:
+    cdef size_t in_size = in_arr.shape[0]
+    cdef size_t length = (in_size-1) * 2
+    return length
+
+def irfft_length(COMPLEX_ft[:] in_arr):
+    return _irfft_length(in_arr)
+
+
 cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
     cdef rfft_plan plan
@@ -26,7 +44,7 @@ cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint
 
 cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
-    cdef Py_ssize_t out_size = in_size // 2 + 1
+    cdef Py_ssize_t out_size = _rfft_length(in_arr)
     if out_arr.shape[0] < out_size:
         with gil:
             raise Exception('out_arr shape mismatch')
@@ -49,7 +67,7 @@ cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:
 
 cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
-    cdef Py_ssize_t length = (in_size-1) * 2
+    cdef Py_ssize_t length = _irfft_length(in_arr)
     cdef rfft_plan plan
     if use_cache:
         plan = plan_cache.get_rplan(length)
@@ -62,7 +80,7 @@ cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bin
 
 cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
-    cdef Py_ssize_t length = (in_size-1) * 2
+    cdef Py_ssize_t length = _irfft_length(in_arr)
     if out_arr.shape[0] < length:
         with gil:
             raise Exception('out_arr shape mismatch')
@@ -83,15 +101,14 @@ cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[
 def rfft(REAL_ft[:] in_arr, fct=None):
     if fct is None:
         fct = 1.0
-    in_size = in_arr.shape[0]
-    out_arr = np.empty(in_size // 2 + 1, dtype=np.complex128)
-    out_size = _rfft(in_arr, out_arr, fct)
+    out_size = _rfft_length(in_arr)
+    out_arr = np.empty(out_size, dtype=np.complex128)
+    _rfft(in_arr, out_arr, fct)
     assert out_size == out_arr.size
     return out_arr
 
 def irfft(COMPLEX_ft[:] in_arr, fct=None):
-    in_size = in_arr.shape[0]
-    out_size = (in_size-1) * 2
+    out_size = _irfft_length(in_arr)
     if fct is None:
         fct = <double>(1 / <double>out_size)
     out_arr = np.empty(out_size, dtype=np.float64)
