@@ -123,8 +123,8 @@ cdef class PlanCreate:
     cdef check_plan(self, rfft_plan plan, size_t length):
         cdef double[:] x = np.random.uniform(-1., 1., length)
         cdef size_t ff_length = fft._rfft_length(x)
-        cdef COMPLEX_ft[:] ff = np.empty(ff_length, dtype=np.complex128)
-        cdef COMPLEX_ft[:] ff2 = np.empty(ff_length, dtype=np.complex128)
+        cdef double complex[:] ff = np.empty(ff_length, dtype=np.complex128)
+        cdef double complex[:] ff2 = np.empty(ff_length, dtype=np.complex128)
 
         fft._rfft_with_plan(&plan, x, ff, 1.0)
         fft._rfft(x, ff2, 1.0)

@@ -105,9 +105,10 @@ cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[
 def rfft(REAL_ft[:] in_arr, fct=None):
     if fct is None:
         fct = 1.0
+    cdef double _fct = fct
     out_size = _rfft_length(in_arr)
-    out_arr = np.empty(out_size, dtype=np.complex128)
-    _rfft(in_arr, out_arr, fct)
+    cdef double complex[:] out_arr = np.empty(out_size, dtype=np.complex128)
+    _rfft(in_arr, out_arr, _fct)
     assert out_size == out_arr.size
     return out_arr
 
@@ -115,6 +116,7 @@ def irfft(COMPLEX_ft[:] in_arr, fct=None):
     out_size = _irfft_length(in_arr)
     if fct is None:
         fct = <double>(1 / <double>out_size)
-    out_arr = np.empty(out_size, dtype=np.float64)
-    _irfft(in_arr, out_arr, fct)
+    cdef double _fct = fct
+    cdef double[:] out_arr = np.empty(out_size, dtype=np.float64)
+    _irfft(in_arr, out_arr, _fct)
     return out_arr

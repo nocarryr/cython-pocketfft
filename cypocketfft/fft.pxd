@@ -3,26 +3,14 @@
 from libc.stdint cimport *
 from cypocketfft.wrapper cimport cfft_plan, rfft_plan
 
-ctypedef float float32_t
-ctypedef double float64_t
 
-ctypedef struct complex_64_t:
-    float real
-    float imag
+ctypedef fused REAL_ft:
+    float
+    double
 
-ctypedef struct complex_128_t:
-    double real
-    double imag
-
-# ctypedef fused REAL_ft:
-#     float32_t
-#     float64_t
-ctypedef float64_t REAL_ft
-
-# ctypedef fused COMPLEX_ft:
-#     complex_64_t
-#     complex_128_t
-ctypedef complex_128_t COMPLEX_ft
+ctypedef fused COMPLEX_ft:
+    float complex
+    double complex
 
 cdef size_t _rfft_length(REAL_ft[:] in_arr) nogil except -1
 cdef size_t _irfft_length(COMPLEX_ft[:] in_arr) nogil except -1
