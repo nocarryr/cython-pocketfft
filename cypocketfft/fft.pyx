@@ -47,7 +47,9 @@ cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:
     cdef Py_ssize_t out_size = _rfft_length(in_arr)
     if out_arr.shape[0] < out_size:
         with gil:
-            raise Exception('out_arr shape mismatch')
+            raise Exception('out_arr shape mismatch. size={}, expected={}'.format(
+                out_arr.shape[0], out_size,
+            ))
 
     cdef void *in_ptr = &in_arr[0]
     cdef void *out_ptr = &out_arr[0]
@@ -83,7 +85,9 @@ cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[
     cdef Py_ssize_t length = _irfft_length(in_arr)
     if out_arr.shape[0] < length:
         with gil:
-            raise Exception('out_arr shape mismatch')
+            raise Exception('out_arr shape mismatch. size={}, expected={}'.format(
+                out_arr.shape[0], length,
+            ))
     cdef void *in_ptr = &in_arr[0]
     cdef void *out_ptr = &out_arr[0]
 
