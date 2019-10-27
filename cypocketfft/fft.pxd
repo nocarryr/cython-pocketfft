@@ -5,11 +5,11 @@ from cypocketfft.wrapper cimport cfft_plan, rfft_plan
 
 
 ctypedef fused REAL_ft:
-    float
+    # float
     double
 
 ctypedef fused COMPLEX_ft:
-    float complex
+    # float complex
     double complex
 
 cdef size_t _rfft_length(REAL_ft[:] in_arr) nogil except -1
