@@ -16,7 +16,7 @@ from cypocketfft.fft cimport COMPLEX_ft
 from cypocketfft.plancache cimport PlanCache
 
 import numpy as np
-cimport numpy as np
+# cimport numpy as np
 
 def LOG(s):
     print(s)

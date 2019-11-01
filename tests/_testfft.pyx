@@ -8,7 +8,7 @@ from cython.parallel cimport prange
 IF UNAME_SYSNAME != "Windows":
     from posix.time cimport timespec, clock_gettime, CLOCK_REALTIME
 import numpy as np
-cimport numpy as np
+# cimport numpy as np
 import time
 import cProfile
 import pstats
