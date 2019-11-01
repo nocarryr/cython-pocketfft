@@ -96,3 +96,5 @@ cypocketfft/*.c
 cypocketfft/*.cpp
 cypocketfft/*.html
 tests/*.c
+tests/*.cpp
+tests/*.html
