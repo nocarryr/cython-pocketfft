@@ -1,1 +1,2 @@
 Cython>=0.29.6
+-r requirements-test.txt
