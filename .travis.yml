@@ -10,6 +10,6 @@ install:
   - python setup.py build_ext --inplace --use-cython
   - python setup.py sdist bdist_wheel
   - pip install -e .
-  - ./build_tests.py
+  - python build_tests.py
 script:
   - py.test
