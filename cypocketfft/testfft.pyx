@@ -4,6 +4,8 @@
 
 cimport cython
 from cython.parallel cimport prange
+IF UNAME_SYSNAME != "Windows":
+    from posix.time cimport timespec, clock_gettime, CLOCK_REALTIME
 import numpy as np
 cimport numpy as np
 import time
@@ -14,6 +16,17 @@ from cypocketfft.wrapper cimport *
 from cypocketfft import fft
 from cypocketfft cimport fft
 from cypocketfft.fft cimport REAL_ft, COMPLEX_ft
+
+cdef double get_time() nogil except *:
+    cdef double result
+    IF UNAME_SYSNAME == "Windows":
+        result = time.time()
+    ELSE:
+        cdef timespec t
+        clock_gettime(CLOCK_REALTIME, &t)
+        result = <double>t.tv_sec
+        result += <double>t.tv_nsec / <double>1000000000
+    return result
 
 cdef void _handle_rfft(double[:] time_domain, COMPLEX_ft[:] freq_domain, double fct, bint is_forward) nogil except *:
     if is_forward:
@@ -78,53 +91,55 @@ def test_numpy(Py_ssize_t N=32, Py_ssize_t reps=1, object pr=None):
 
     return pr
 
-def test(Py_ssize_t N=32, Py_ssize_t reps=1, return_result=False):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def test(Py_ssize_t N=32, Py_ssize_t reps=1, bint return_result=False, bint use_omp=False):
     t = np.linspace(0., 1., N)
     fc = 6000.
-    x = np.sin(2*np.pi*fc*t)
+    cdef double[:] x = np.sin(2*np.pi*fc*t)
     cdef double[:] x_view = x
-    ff_length = fft._rfft_length(x_view)
-    # ff = np.empty(ff_length, dtype=np.complex128)
-    ff = np.empty((reps, ff_length), dtype=np.complex128)
-    cdef double complex[:,:] ff_view = ff
-
-    # fft._rfft(x_view, ff_view[0,:], 1.0)
-    start_ts = time.time()
+    cdef Py_ssize_t ff_length = fft._rfft_length(x_view)
+    cdef double complex[:,:] ff_view = np.empty((reps, ff_length), dtype=np.complex128)
 
     cdef Py_ssize_t i
-    # with nogil:
-    #     for i in prange(reps):
-    #         fft._rfft(x_view, ff_view[i,:], 1.0)
+    cdef double start_ts, end_ts
 
-    with nogil:
-        for i in prange(reps):
-            fft._rfft(x_view, ff_view[i,:], 1.0)
+    if use_omp:
+        start_ts = get_time()
+        with nogil:
+            for i in prange(reps):
+                fft._rfft(x_view, ff_view[i,:], 1.0)
+    else:
+        start_ts = get_time()
+        with nogil:
+            for i in range(reps):
+                fft._rfft(x_view, ff_view[i,:], 1.0)
 
-    end_ts = time.time()
+    end_ts = get_time()
     dur = end_ts - start_ts
-    percall = dur / float(reps)
+    percall = dur / <double>reps
     print('cython duration={}, percall={}'.format(dur, percall))
 
-    # npff = np.empty((reps, ff_length), dtype=np.complex128)
     cdef double complex[:,:] npff_view = np.empty((reps, ff_length), dtype=np.complex128)
-    cdef double complex[:] npff# = np.empty(ff_length, dtype=np.complex128)
+    cdef double complex[:] npff
+    cdef double np_start_ts, np_end_ts
 
-    np_start_ts = time.time()
+    np_start_ts = get_time()
     for i in range(reps):
         npff = np.fft.rfft(x)
         npff_view[i,:] = npff
-    np_end_ts = time.time()
+    np_end_ts = get_time()
+
     np_dur = np_end_ts - np_start_ts
-    np_percall = np_dur / float(reps)
+    np_percall = np_dur / <double>reps
     print('numpy duration={}, percall={}'.format(np_dur, np_percall))
 
-    ff = ff[0]
     assert np.allclose(ff_view, npff_view)
 
-    iff = fft.irfft(ff_view[0,:])
-    npiff = np.fft.irfft(ff_view[0,:])
+    cdef double[:] iff = fft.irfft(ff_view[0,:])
+    cdef double[:] npiff = np.fft.irfft(ff_view[0,:])
     assert np.allclose(iff, npiff)
     assert np.allclose(iff, x)
 
     if return_result:
-        return x, ff, iff
+        return np.asarray(x), np.asarray(ff_view[0]), np.asarray(iff)
