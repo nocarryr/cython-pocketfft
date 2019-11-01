@@ -1,6 +1,7 @@
 # cython: language_level=3
 # distutils: extra_compile_args = -fopenmp
 # distutils: extra_link_args = -fopenmp
+# distutils: include_dirs = ../cypocketfft/_pocketfft_lib
 
 cimport cython
 from cython.parallel cimport prange
