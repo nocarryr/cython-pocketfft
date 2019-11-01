@@ -1,0 +1,9 @@
+include cypocketfft/*.pyx
+include cypocketfft/*.pxd
+recursive-include cypocketfft/*.c
+recursive-include cypocketfft/*.cpp
+recursive-include cypocketfft/*.h
+include cypocketfft/_pocketfft_lib/LICENSE*
+include cypocketfft/_pocketfft_lib/README*
+include cypocketfft/_pocketfft_lib/pocketfft.*
+include build-meta.json
