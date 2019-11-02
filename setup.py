@@ -109,7 +109,7 @@ def build_extensions(pkg_dir, search_pattern='**/*.pyx'):
 
 if USE_CYTHON:
     ext_modules = cythonize(
-        'cypocketfft/*.pyx',
+        'src/cypocketfft/*.pyx',
         include_path=INCLUDE_PATH,
         annotate=True,
         compiler_directives={
@@ -117,7 +117,7 @@ if USE_CYTHON:
         },
     )
 else:
-    ext_modules = build_extensions(PROJECT_PATH / 'cypocketfft')
+    ext_modules = build_extensions(PROJECT_PATH / 'src' / 'cypocketfft')
 
 setup(
     ext_modules=ext_modules,
