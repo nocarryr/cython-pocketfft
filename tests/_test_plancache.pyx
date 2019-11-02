@@ -1,7 +1,6 @@
 # cython: language_level=3
 # distutils: language = c++
 # distutils: extra_compile_args = -std=c++11
-# distutils: include_dirs = ../src/cypocketfft/_pocketfft_lib
 
 import time
 import threading
