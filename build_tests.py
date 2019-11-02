@@ -11,10 +11,10 @@ class ChDir(object):
         self.cur_dir = cur_dir
     def __enter__(self):
         self.orig_dir = Path.cwd()
-        os.chdir(self.cur_dir)
+        os.chdir(str(self.cur_dir))
         return self
     def __exit__(self, *args):
-        os.chdir(self.orig_dir)
+        os.chdir(str(self.orig_dir))
 
 TEST_DIR = Path(__file__).resolve().parent / 'tests'
 
