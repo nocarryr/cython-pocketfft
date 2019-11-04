@@ -7,37 +7,28 @@ trigger:
 - "*"
 
 jobs:
-# - job: generator
-#   steps:
-#   - checkout: none
-#   - task: PythonScript@0
-#     name: strat
-#     inputs:
-#       scriptSource: 'inline'
-#       script: |
-#         import json
-#         PY_VERSIONS = ['3.5', '3.6', '3.7']
-#         d = {
-#             'Python{}'.format(''.join(v.split('.'))): {'python-version':v}
-#             for v in PY_VERSIONS}
-#         s = json.dumps(d)
-#         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
+- job: generator
+  steps:
+  - checkout: none
+  - task: PythonScript@0
+    name: strat
+    inputs:
+      scriptSource: 'inline'
+      script: |
+        import json
+        PY_VERSIONS = ['3.5', '3.6', '3.7']
+        d = {
+            'Python{}'.format(''.join(v.split('.'))): {'python.version':v}
+            for v in PY_VERSIONS}
+        s = json.dumps(d)
+        print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
 - job: compile
-  # dependsOn: generator
+  dependsOn: generator
   pool:
     vmImage: 'ubuntu-latest'
-  # strategy:
-  #   matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   strategy:
-    matrix:
-      Python35:
-        python.version: '3.5'
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -54,20 +45,13 @@ jobs:
     artifact: dist-$(python.version)
 
 - job: testFromWheel
-  dependsOn: compile
+  dependsOn:
+  - generator
+  - compile
   pool:
     vmImage: 'ubuntu-latest'
-  # strategy:
-  #   matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   strategy:
-    matrix:
-      Python35:
-        python.version: '3.5'
-      Python36:
-        python.version: '3.6'
-      Python37:
-        python.version: '3.7'
-
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - task: UsePythonVersion@0
     inputs:
