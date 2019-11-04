@@ -22,7 +22,7 @@ steps:
   - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: dist-$(python.version)
 
-- ${{ if neq(parameters.test_mode, '') }}:
+- ${{ if ne(parameters.test_mode, '') }}:
   - task: DownloadPipelineArtifact@2
     inputs:
       artifact: dist-$(python.version)
@@ -36,10 +36,10 @@ steps:
   - script: pip install dist/*.tar.gz
     displayName: 'Install sdist'
 
-- ${{ if neq(parameters.test_mode, '') }}:
+- ${{ if ne(parameters.test_mode, '') }}:
   - script: python build_tests.py
     displayName: 'Build Tests'
 
-- ${{ if neq(parameters.test_mode, '') }}:
+- ${{ if ne(parameters.test_mode, '') }}:
   - script: py.test
     displayName: 'Run Tests'
