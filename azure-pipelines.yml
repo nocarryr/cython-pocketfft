@@ -19,7 +19,6 @@ jobs:
         d = {
             'Python{}'.format(''.join(v.split('.'))): {'python-version':v}
             for v in PY_VERSIONS}
-        d = {'matrix':d}
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
