@@ -6,37 +6,71 @@
 trigger:
 - "*"
 
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python35:
-      python.version: '3.5'
-    Python36:
-      python.version: '3.6'
-    Python37:
-      python.version: '3.7'
+jobs:
+- job: generator
+  steps:
+  - task: PythonScript@0
+    name: strat
+    inputs:
+      scriptSource: 'inline'
+      script: |
+        import json
+        PY_VERSIONS = ['3.5', '3.6', '3.7']
+        d = {
+            'Python{}'.format(''.join(v.split('.'))): {'python-version':v}
+            for v in PY_VERSIONS}
+        d = {'matrix':d}
+        s = json.dumps(d)
+        print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+- job: compile
+  dependsOn: generator
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
 
-- script: |
-    python -m pip install -U pip setuptools wheel
-    pip install -r requirements.txt
-    pip install pytest
-  displayName: 'Install dependencies'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
 
-- script: |
-    python setup.py build_ext --inplace --use-cython
-    python setup.py sdist bdist_wheel
-  displayName: 'Build Extenstions'
+  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt && pip install pytest
+    displayName: 'Install dependencies'
 
-- script: |
-    pip install -e .
-    python build_tests.py
-    py.test
-  displayName: 'Test Development Mode'
+  - script: python setup.py build_ext --inplace --use-cython && python setup.py sdist bdist_wheel
+    displayName: 'Build Extenstions'
 
+  - publish: $(System.DefaultWorkingDirectory)/dist
+    artifact: dist-$(python.version)
+
+- job: testFromWheel
+  dependsOn: generator | compile
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: dist-$(python-version)
+      targetPath: $(System.DefaultWorkingDirectory)/dist
+
+  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
+    displayName: 'Install dependencies'
+
+  - script: pip install dist/*.whl
+    displayName: 'Install wheel'
+
+  - script: python build_tests.py
+    displayName: 'Build Tests'
+
+  - script: py.test
+    displayName: 'Run Tests'
