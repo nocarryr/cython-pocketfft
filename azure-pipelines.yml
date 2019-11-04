@@ -35,12 +35,6 @@ jobs:
       python.version: '$(python.version)'
       use_cython: 'true'
 
-  - script: python setup.py build_ext --inplace --use-cython && python setup.py sdist bdist_wheel
-    displayName: 'Build Extenstions'
-
-  - publish: $(System.DefaultWorkingDirectory)/dist
-    artifact: dist-$(python.version)
-
 - job: testFromWheel
   dependsOn:
   - generator

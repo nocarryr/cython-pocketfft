@@ -12,28 +12,34 @@ steps:
 - script: python -m pip install -U pip setuptools wheel && pip install -r requirements-test.txt
   displayName: 'Install dependencies'
 
-- script: python -m pip install -r requirements.txt
-  condition: eq(parameters.use_cython, 'true')
-  displayName: 'Install build dependencies'
+- ${{ if eq(parameters.use_cython, 'true') }}:
+  - script: python -m pip install -r requirements.txt
+    displayName: 'Install build dependencies'
 
-- task: DownloadPipelineArtifact@2
-  condition: neq(parameters.test_mode, '')
-  inputs:
+  - script: python setup.py build_ext --inplace --use-cython && python setup.py sdist bdist_wheel
+    displayName: 'Build Extenstions'
+
+  - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: dist-$(python.version)
-    targetPath: $(System.DefaultWorkingDirectory)/dist
 
-- script: pip install dist/*.whl
-  condition: eq(parameters.test_mode, 'wheel')
-  displayName: 'Install wheel'
+- ${{ if neq(parameters.test_mode, '') }}:
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: dist-$(python.version)
+      targetPath: $(System.DefaultWorkingDirectory)/dist
 
-- script: pip install dist/*.tar.gz
-  condition: eq(parameters.test_mode, 'sdist')
-  displayName: 'Install sdist'
+- ${{ if eq(parameters.test_mode, 'wheel') }}:
+  - script: pip install dist/*.whl
+    displayName: 'Install wheel'
 
-- script: python build_tests.py
-  condition: neq(parameters.test_mode, '')
-  displayName: 'Build Tests'
+- ${{ if eq(parameters.test_mode, 'sdist') }}:
+  - script: pip install dist/*.tar.gz
+    displayName: 'Install sdist'
 
-- script: py.test
-  condition: neq(parameters.test_mode, '')
-  displayName: 'Run Tests'
+- ${{ if neq(parameters.test_mode, '') }}:
+  - script: python build_tests.py
+    displayName: 'Build Tests'
+
+- ${{ if neq(parameters.test_mode, '') }}:
+  - script: py.test
+    displayName: 'Run Tests'
