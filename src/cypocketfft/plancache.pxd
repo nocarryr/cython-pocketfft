@@ -1,6 +1,4 @@
 # cython: language_level=3
-# distutils: include_dirs = src/cypocketfft/_pocketfft_lib
-# distutils: sources = src/cypocketfft/_pocketfft_lib/pocketfft.c
 
 from libcpp.unordered_map cimport unordered_map as cpp_map
 from libcpp.utility cimport pair as cpp_pair

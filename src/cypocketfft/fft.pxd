@@ -1,6 +1,4 @@
 # cython: language_level=3
-# distutils: include_dirs = src/cypocketfft/_pocketfft_lib
-# distutils: sources = src/cypocketfft/_pocketfft_lib/pocketfft.c
 
 from libc.stdint cimport *
 from cypocketfft.wrapper cimport cfft_plan, rfft_plan
