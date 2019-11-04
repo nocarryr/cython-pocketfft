@@ -30,13 +30,10 @@ jobs:
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-
-  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt && pip install pytest
-    displayName: 'Install dependencies'
+  - template: 'ci/templates/build-steps.yml'
+    parameters:
+      python.version: '$(python.version)'
+      use_cython: 'true'
 
   - script: python setup.py build_ext --inplace --use-cython && python setup.py sdist bdist_wheel
     displayName: 'Build Extenstions'
@@ -53,27 +50,10 @@ jobs:
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      artifact: dist-$(python.version)
-      targetPath: $(System.DefaultWorkingDirectory)/dist
-
-  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
-    displayName: 'Install dependencies'
-
-  - script: pip install dist/*.whl
-    displayName: 'Install wheel'
-
-  - script: python build_tests.py
-    displayName: 'Build Tests'
-
-  - script: py.test
-    displayName: 'Run Tests'
+  - template: 'ci/templates/build-steps.yml'
+    parameters:
+      python.version: '$(python.version)'
+      test_mode: 'wheel'
 
 - job: testFromSDist
   dependsOn:
@@ -84,24 +64,7 @@ jobs:
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      artifact: dist-$(python.version)
-      targetPath: $(System.DefaultWorkingDirectory)/dist
-
-  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
-    displayName: 'Install dependencies'
-
-  - script: pip install dist/*.tar.gz
-    displayName: 'Install sdist'
-
-  - script: python build_tests.py
-    displayName: 'Build Tests'
-
-  - script: py.test
-    displayName: 'Run Tests'
+  - template: 'ci/templates/build-steps.yml'
+    parameters:
+      python.version: '$(python.version)'
+      test_mode: 'sdist'
