@@ -16,7 +16,7 @@ jobs:
       scriptSource: 'inline'
       script: |
         import json
-        PY_VERSIONS = ['3.5', '3.6', '3.7']
+        PY_VERSIONS = ['3.5', '3.6', '3.7', '3.8']
         d = {
             'Python{}'.format(''.join(v.split('.'))): {'python.version':v}
             for v in PY_VERSIONS}
