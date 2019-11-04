@@ -74,3 +74,34 @@ jobs:
 
   - script: py.test
     displayName: 'Run Tests'
+
+- job: testFromSDist
+  dependsOn:
+  - generator
+  - compile
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: dist-$(python.version)
+      targetPath: $(System.DefaultWorkingDirectory)/dist
+
+  - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
+    displayName: 'Install dependencies'
+
+  - script: pip install dist/*.tar.gz
+    displayName: 'Install sdist'
+
+  - script: python build_tests.py
+    displayName: 'Build Tests'
+
+  - script: py.test
+    displayName: 'Run Tests'
