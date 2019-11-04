@@ -1,6 +1,4 @@
 # cython: language_level=3
-# distutils: include_dirs = cypocketfft/_pocketfft_lib
-# distutils: sources = cypocketfft/_pocketfft_lib/pocketfft.c
 
 cdef cfft_plan _make_cfft_plan(size_t length) nogil:
     return make_cfft_plan(length)

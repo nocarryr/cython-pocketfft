@@ -1,6 +1,4 @@
 # cython: language_level=3
-# distutils: include_dirs = cypocketfft/_pocketfft_lib
-# distutils: sources = cypocketfft/_pocketfft_lib/pocketfft.c
 
 cdef extern from "pocketfft.h" nogil:
     cdef struct cfft_plan_i

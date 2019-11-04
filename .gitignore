@@ -92,9 +92,9 @@ venv*
 
 README.rst
 
-cypocketfft/*.c
-cypocketfft/*.cpp
-cypocketfft/*.html
+src/cypocketfft/*.c
+src/cypocketfft/*.cpp
+src/cypocketfft/*.html
 tests/*.c
 tests/*.cpp
 tests/*.html

@@ -13,7 +13,7 @@ if USE_CYTHON:
 PROJECT_PATH = Path(__file__).parent
 WIN32 = sys.platform == 'win32'
 IS_BUILD = len({'sdist', 'bdist_wheel', 'build_ext'} & set(sys.argv)) > 0
-INCLUDE_PATH = []
+INCLUDE_PATH = ['src/cypocketfft/_pocketfft_lib']
 
 try:
     import numpy
@@ -108,16 +108,32 @@ def build_extensions(pkg_dir, search_pattern='**/*.pyx'):
     return extensions
 
 if USE_CYTHON:
+    ext_modules = [
+        Extension(
+            'cypocketfft.fft',
+            ['src/cypocketfft/fft.pyx'],
+            include_dirs=INCLUDE_PATH,
+        ),
+        Extension(
+            'cypocketfft.plancache',
+            ['src/cypocketfft/plancache.pyx'],
+            include_dirs=INCLUDE_PATH,
+        ),
+        Extension(
+            'cypocketfft.wrapper',
+            ['src/cypocketfft/wrapper.pyx', 'src/cypocketfft/_pocketfft_lib/pocketfft.c'],
+            include_dirs=INCLUDE_PATH,
+        )
+    ]
     ext_modules = cythonize(
-        'cypocketfft/*.pyx',
-        include_path=INCLUDE_PATH,
+        ext_modules,
         annotate=True,
         compiler_directives={
             'embedsignature':True,
         },
     )
 else:
-    ext_modules = build_extensions(PROJECT_PATH / 'cypocketfft')
+    ext_modules = build_extensions(PROJECT_PATH / 'src' / 'cypocketfft')
 
 setup(
     ext_modules=ext_modules,
