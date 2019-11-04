@@ -46,7 +46,9 @@ jobs:
     artifact: dist-$(python.version)
 
 - job: testFromWheel
-  dependsOn: generator | compile
+  dependsOn:
+  - generator
+  - compile
   pool:
     vmImage: 'ubuntu-latest'
   strategy:
