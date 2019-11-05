@@ -19,11 +19,11 @@ steps:
     displayName: 'Build Extenstions'
 
 - ${{ if ne(parameters.build_types, '') }}:
-  -${{ if contains(parameters.build_types, 'wheel') }}:
+  - ${{ if contains(parameters.build_types, 'wheel') }}:
     - script: python setup.py bdist_wheel
       displayName: 'Build wheel'
 
-  -${{ if contains(parameters.build_types, 'sdist') }}:
+  - ${{ if contains(parameters.build_types, 'sdist') }}:
     - script: python setup.py bdist_wheel
       displayName: 'Build sdist'
 
