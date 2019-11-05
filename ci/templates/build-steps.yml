@@ -1,7 +1,11 @@
 parameters:
   python.version: ''
   use_cython: 'false'
+  build_types: ''
   test_mode: ''
+
+variables:
+  project_name: 'cython-pocketfft'
 
 steps:
 - task: UsePythonVersion@0
@@ -13,30 +17,36 @@ steps:
   displayName: 'Install dependencies'
 
 - ${{ if eq(parameters.use_cython, 'true') }}:
-  - script: python setup.py build_ext --inplace --use-cython && python setup.py sdist bdist_wheel
+  - script: python setup.py build_ext --inplace --use-cython
     displayName: 'Build Extenstions'
 
-  - publish: $(System.DefaultWorkingDirectory)/dist
-    artifact: dist-$(python.version)
+- ${{ if ne(parameters.build_types, '') }}:
+  - script: python setup.py ${{ parameters.build_types }}
+    displayName: 'Build distribution'
 
-- ${{ if ne(parameters.test_mode, '') }}:
+  - publish: $(System.DefaultWorkingDirectory)/dist
+    artifact: dist
+
+- ${{ if eq(parameters.use_cython, 'false') }}:
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: dist-$(python.version)
+      artifact: dist
       targetPath: $(System.DefaultWorkingDirectory)/dist
 
+- ${{ if eq(parameters.test_mode, 'develop') }}:
+  - script: pip install -e .
+    displayName: 'Install develop mode'
+
 - ${{ if eq(parameters.test_mode, 'wheel') }}:
-  - script: pip install dist/*.whl
+  - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install wheel'
 
 - ${{ if eq(parameters.test_mode, 'sdist') }}:
-  - script: pip install dist/*.tar.gz
+  - script: pip install --no-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install sdist'
 
-- ${{ if ne(parameters.test_mode, '') }}:
-  - script: python build_tests.py
-    displayName: 'Build Tests'
+- script: python build_tests.py
+  displayName: 'Build Tests'
 
-- ${{ if ne(parameters.test_mode, '') }}:
-  - script: py.test
-    displayName: 'Run Tests'
+- script: py.test
+  displayName: 'Run Tests'
