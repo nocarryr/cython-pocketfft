@@ -21,10 +21,7 @@ jobs:
         d = {}
         for v in PY_VERSIONS:
             key = 'Python{}'.format(''.join(v.split('.')))
-            build_types = ['wheel']
-            if v == SDIST_VERSION:
-                build_types.append('sdist')
-            d[key] = {'python.version':v, 'build_types':' '.join(build_types)}
+            d[key] = {'python.version':v, 'build_sdist':str(v == SDIST_VERSION).lower()}
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
@@ -40,7 +37,8 @@ jobs:
     parameters:
       python.version: '$(python.version)'
       use_cython: 'true'
-      build_types: $(build_types)
+      build_wheel: 'true'
+      build_sdist: '$(build_sdist)'
       test_mode: 'develop'
 
 - job: testFromWheel

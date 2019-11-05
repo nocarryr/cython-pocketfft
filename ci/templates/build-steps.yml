@@ -1,17 +1,16 @@
 parameters:
   python.version: ''
   use_cython: 'false'
-  build_types: ''
+  build_sdist: 'false'
+  build_wheel: 'false'
   test_mode: ''
   project_name: 'cython-pocketfft'
 
 steps:
 - bash: |
-  echo $[ parameters.use_cython ]
-  echo $[ parameters.build_types ]
-  echo $[ parameters.test_mode ]
-
-- bash: echo ${{ contains(parameters.build_types, 'wheel') }}
+  echo $(use_cython)
+  echo $(build_types)
+  echo $(test_mode)
 
 - task: UsePythonVersion@0
   inputs:
@@ -21,17 +20,16 @@ steps:
 - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- ${{ if eq(parameters.use_cython, 'true') }}:
+- ${{ if or(eq(parameters.build_wheel, 'true'), eq(parameters.build_sdist, 'true')) }}:
   - script: python setup.py build_ext --inplace --use-cython
     displayName: 'Build Extenstions'
 
-- ${{ if ne(parameters.build_types, '') }}:
-  - ${{ if contains(parameters.build_types, 'wheel') }}:
+  - ${{ if eq(parameters.build_wheel, 'true') }}:
     - script: python setup.py bdist_wheel
       displayName: 'Build wheel'
 
-  - ${{ if contains(parameters.build_types, 'sdist') }}:
-    - script: python setup.py bdist_wheel
+  - ${{ if eq(parameters.build_sdist, 'true') }}:
+    - script: python setup.py sdist
       displayName: 'Build sdist'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
