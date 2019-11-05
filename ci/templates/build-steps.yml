@@ -9,7 +9,8 @@ parameters:
 steps:
 - bash: |
   echo $(use_cython)
-  echo $(build_types)
+  echo $(build_sdist)
+  echo $(build_wheel)
   echo $(test_mode)
 
 - task: UsePythonVersion@0
