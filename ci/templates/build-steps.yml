@@ -20,12 +20,12 @@ steps:
     displayName: 'Build dist'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
-    artifact: dist-$(python.version)
+    artifact: $(artifact_name)
 
 - ${{ if eq(parameters.use_cython, 'false') }}:
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: dist-$(python.version)
+      artifact: $(artifact_name)
       targetPath: $(System.DefaultWorkingDirectory)/dist
 
 - ${{ if eq(parameters.test_mode, 'develop') }}:

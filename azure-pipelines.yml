@@ -19,25 +19,34 @@ jobs:
       scriptSource: 'inline'
       script: |
         import json
+        PLATFORMS = {
+            'linux':'ubuntu-latest',
+            'mac':'macOS-latest',
+            'windows':'windows-latest',
+        }
         PY_VERSIONS = ['3.5', '3.6', '3.7']
         d = {}
-        for v in PY_VERSIONS:
-            key = 'Python{}'.format(''.join(v.split('.')))
-            d[key] = {'python.version':v}
+        for pl_key, pl_img in PLATFORMS.items():
+            for py_v in PY_VERSIONS:
+                job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
+                d[job_key] = {
+                    'imageName':pl_img,
+                    'python.version':py_v,
+                    'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
+                }
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
 - job: compile
   dependsOn: generator
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: $(imageName)
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - bash: echo $(build_types)
   - template: 'ci/templates/build-steps.yml'
     parameters:
-      python.version: '$(python.version)'
       use_cython: 'true'
       test_mode: 'develop'
 
@@ -46,13 +55,12 @@ jobs:
   - generator
   - compile
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: $(imageName)
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - template: 'ci/templates/build-steps.yml'
     parameters:
-      python.version: '$(python.version)'
       test_mode: 'wheel'
 
 - job: testFromSDist
@@ -60,11 +68,10 @@ jobs:
   - generator
   - compile
   pool:
-    vmImage: 'ubuntu-latest'
+    vmImage: $(imageName)
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - template: 'ci/templates/build-steps.yml'
     parameters:
-      python.version: '$(python.version)'
       test_mode: 'sdist'
