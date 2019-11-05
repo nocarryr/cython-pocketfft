@@ -24,7 +24,7 @@ jobs:
             build_types = ['wheel']
             if v == SDIST_VERSION:
                 build_types.append('sdist')
-            d[key] = {'python-version':v, 'build_types':' '.join(build_types)}
+            d[key] = {'python.version':v, 'build_types':' '.join(build_types)}
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
