@@ -6,6 +6,9 @@
 trigger:
 - "*"
 
+variables:
+  project_name: 'cython-pocketfft'
+
 jobs:
 - job: generator
   steps:

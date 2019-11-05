@@ -2,7 +2,6 @@ parameters:
   python.version: ''
   use_cython: 'false'
   test_mode: ''
-  project_name: 'cython-pocketfft'
 
 steps:
 - task: UsePythonVersion@0
