@@ -3,8 +3,6 @@ parameters:
   use_cython: 'false'
   build_types: ''
   test_mode: ''
-
-variables:
   project_name: 'cython-pocketfft'
 
 steps:
