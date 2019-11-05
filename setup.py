@@ -123,6 +123,8 @@ if USE_CYTHON:
             'cypocketfft.wrapper',
             ['src/cypocketfft/wrapper.pyx', 'src/cypocketfft/_pocketfft_lib/pocketfft.c'],
             include_dirs=INCLUDE_PATH,
+            extra_compile_args=['-std=c99'],
+            extra_link_args=['-std=c99'],
         )
     ]
     ext_modules = cythonize(
