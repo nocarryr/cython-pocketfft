@@ -35,6 +35,7 @@ jobs:
   strategy:
     matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
+  - bash: echo $(build_types)
   - template: 'ci/templates/build-steps.yml'
     parameters:
       python.version: '$(python.version)'

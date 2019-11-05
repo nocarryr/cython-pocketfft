@@ -6,6 +6,9 @@ parameters:
   project_name: 'cython-pocketfft'
 
 steps:
+- bash: echo $(use_cython)
+- bash: echo $(build_types)
+- bash: echo $(test_mode)
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '$(python.version)'
