@@ -39,7 +39,7 @@ jobs:
     parameters:
       python.version: '$(python.version)'
       use_cython: 'true'
-      build_types: '$(build_types)'
+      build_types: $(build_types)
       test_mode: 'develop'
 
 - job: testFromWheel
