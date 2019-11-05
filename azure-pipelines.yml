@@ -38,7 +38,7 @@ jobs:
       python.version: '$(python.version)'
       use_cython: 'true'
       build_wheel: 'true'
-      build_sdist: '$(build_sdist)'
+      build_sdist: $(build_sdist)
       test_mode: 'develop'
 
 - job: testFromWheel
