@@ -19,8 +19,13 @@ steps:
     displayName: 'Build Extenstions'
 
 - ${{ if ne(parameters.build_types, '') }}:
-  - script: python setup.py ${{ parameters.build_types }}
-    displayName: 'Build distribution'
+  -${{ if contains(parameters.build_types, 'wheel') }}:
+    - script: python setup.py bdist_wheel
+      displayName: 'Build wheel'
+
+  -${{ if contains(parameters.build_types, 'sdist') }}:
+    - script: python setup.py bdist_wheel
+      displayName: 'Build sdist'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: dist
