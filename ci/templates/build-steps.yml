@@ -7,11 +7,6 @@ parameters:
 
 steps:
 - bash: |
-  echo ${{ parameters.use_cython }}
-  echo ${{ parameters.build_types }}
-  echo ${{ parameters.test_mode }}
-
-- bash: |
   echo $[ parameters.use_cython ]
   echo $[ parameters.build_types ]
   echo $[ parameters.test_mode ]
