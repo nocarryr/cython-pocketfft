@@ -1,8 +1,6 @@
 parameters:
   python.version: ''
   use_cython: 'false'
-  build_sdist: 'false'
-  build_wheel: 'false'
   test_mode: ''
   project_name: 'cython-pocketfft'
 
@@ -15,25 +13,20 @@ steps:
 - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- ${{ if or(eq(parameters.build_wheel, 'true'), eq(parameters.build_sdist, 'true')) }}:
+- ${{ if eq(parameters.use_cython, 'true') }}:
   - script: python setup.py build_ext --inplace --use-cython
     displayName: 'Build Extenstions'
 
-  - ${{ if eq(parameters.build_wheel, 'true') }}:
-    - script: python setup.py bdist_wheel
-      displayName: 'Build wheel'
-
-  - ${{ if eq(parameters.build_sdist, 'true') }}:
-    - script: python setup.py sdist
-      displayName: 'Build sdist'
+  - script: python setup.py sdist bdist_wheel
+    displayName: 'Build dist'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
-    artifact: dist
+    artifact: dist-$(python.version)
 
 - ${{ if eq(parameters.use_cython, 'false') }}:
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: dist
+      artifact: dist-$(python.version)
       targetPath: $(System.DefaultWorkingDirectory)/dist
 
 - ${{ if eq(parameters.test_mode, 'develop') }}:

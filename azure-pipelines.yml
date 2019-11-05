@@ -17,11 +17,10 @@ jobs:
       script: |
         import json
         PY_VERSIONS = ['3.5', '3.6', '3.7']
-        SDIST_VERSION = '3.7'
         d = {}
         for v in PY_VERSIONS:
             key = 'Python{}'.format(''.join(v.split('.')))
-            d[key] = {'python.version':v, 'build_sdist':str(v == SDIST_VERSION).lower()}
+            d[key] = {'python.version':v}
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
 
@@ -37,8 +36,6 @@ jobs:
     parameters:
       python.version: '$(python.version)'
       use_cython: 'true'
-      build_wheel: 'true'
-      build_sdist: $(build_sdist)
       test_mode: 'develop'
 
 - job: testFromWheel
