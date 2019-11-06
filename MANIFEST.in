@@ -1,8 +1,8 @@
 include src/cypocketfft/*.pyx
 include src/cypocketfft/*.pxd
-recursive-include src/ *.c
-recursive-include src/ *.cpp
-recursive-include src/ *.h
+recursive-include src *.c
+recursive-include src *.cpp
+recursive-include src *.h
 include src/cypocketfft/_pocketfft_lib/LICENSE*
 include src/cypocketfft/_pocketfft_lib/README*
 include src/cypocketfft/_pocketfft_lib/pocketfft.*
