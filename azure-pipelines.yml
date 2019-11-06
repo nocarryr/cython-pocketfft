@@ -28,6 +28,8 @@ jobs:
         d = {}
         for pl_key, pl_img in PLATFORMS.items():
             for py_v in PY_VERSIONS:
+                if py_v == '3.5' and pl_key == 'windows':
+                    continue
                 job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
                 d[job_key] = {
                     'imageName':pl_img,
