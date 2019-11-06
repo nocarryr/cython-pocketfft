@@ -22,7 +22,7 @@ jobs:
         PLATFORMS = {
             'linux':'ubuntu-latest',
             # 'mac':'macOS-latest',
-            # 'windows':'windows-latest',
+            'windows':'windows-latest',
         }
         PY_VERSIONS = ['3.5', '3.6', '3.7']
         d = {}
