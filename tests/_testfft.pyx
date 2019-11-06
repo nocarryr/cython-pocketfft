@@ -20,7 +20,8 @@ from cypocketfft.fft cimport REAL_ft, COMPLEX_ft
 cdef double get_time() nogil except *:
     cdef double result
     IF UNAME_SYSNAME == "Windows":
-        result = time.time()
+        with gil:
+            result = time.time()
     ELSE:
         cdef timespec t
         clock_gettime(CLOCK_REALTIME, &t)
