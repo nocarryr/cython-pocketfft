@@ -1,7 +1,7 @@
 parameters:
   artifact_names: []
 
-${{ each artifact_name in parameters.artifact_names }}:
+- ${{ each artifact_name in parameters.artifact_names }}:
   - task: DownloadPipelineArtifact@2
     inputs:
       artifact: ${{ artifact_name }}
