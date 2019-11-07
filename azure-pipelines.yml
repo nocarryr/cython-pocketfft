@@ -8,6 +8,7 @@ trigger:
 
 variables:
   project_name: 'cython-pocketfft'
+  pypiFeed: 'test-cython-pocketfft'
 
 jobs:
 - job: generator
@@ -100,3 +101,13 @@ jobs:
     inputs:
       pathToPublish: $(System.DefaultWorkingDirectory)/dist
       artifactName: dists
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+    displayName: 'Use Python 3.7'
+  - script: pip install twine
+    displayName: 'install twine'
+  - task: TwineAuthenticate@1
+    inputs:
+      pythonUploadServiceConnection: $(pypiFeed)
+  - script: twine upload -r $(pypiFeed) dist/* --config-file $(PYPIRC_PATH)
