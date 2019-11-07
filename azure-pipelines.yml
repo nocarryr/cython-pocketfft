@@ -37,7 +37,7 @@ jobs:
                     'python.version':py_v,
                     'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
                 }
-                artifact_names.append(d['artifact_name'])
+                artifact_names.append(d[job_key]['artifact_name'])
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
         s = json.dumps({'artifact_names':artifact_names})
