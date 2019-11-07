@@ -1,21 +1,21 @@
 parameters:
-  - name: pre_steps
-    type: stepList
-  - name: post_steps
-    type: stepList
+- name: pre_steps
+  type: stepList
+- name: post_steps
+  type: stepList
 
 steps:
-  - script: echo 'template-pre'
-    displayName: 'template-pre'
-  - ${{ each pre_step in parameters.pre_steps }}:
-      - ${{ pre_step }}
-  - ${{ each artifact_name in variables.metadata.artifact_names }}:
-    - script: echo ${{ artifact_name }}
-    # - task: DownloadPipelineArtifact@2
-    #   inputs:
-    #     artifact: ${{ artifact_name }}
-    #     targetPath: $(System.DefaultWorkingDirectory)/dist'
-  - ${{ each post_step in parameters.post_steps }}:
-      - ${{ post_step }}
-  - script: echo 'template-post'
-    displayName: 'template-post'
+- script: echo 'template-pre'
+  displayName: 'template-pre'
+- ${{ each pre_step in parameters.pre_steps }}:
+    - ${{ pre_step }}
+- ${{ each artifact_name in variables.metadata.artifact_names }}:
+  - script: echo ${{ artifact_name }}
+  # - task: DownloadPipelineArtifact@2
+  #   inputs:
+  #     artifact: ${{ artifact_name }}
+  #     targetPath: $(System.DefaultWorkingDirectory)/dist'
+- ${{ each post_step in parameters.post_steps }}:
+    - ${{ post_step }}
+- script: echo 'template-post'
+  displayName: 'template-post'
