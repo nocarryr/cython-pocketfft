@@ -2,9 +2,13 @@ parameters:
   artifact_names: []
 
 steps:
+  - script: echo 'template-pre'
+    displayName: 'template-pre'
   - ${{ each artifact_name in variables.metadata.artifact_names }}:
     - script: echo ${{ artifact_name }}
     # - task: DownloadPipelineArtifact@2
     #   inputs:
     #     artifact: ${{ artifact_name }}
     #     targetPath: $(System.DefaultWorkingDirectory)/dist'
+  - script: echo 'template-post'
+    displayName: 'template-post'
