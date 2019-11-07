@@ -92,7 +92,7 @@ jobs:
   steps:
   - template: 'ci/templates/gather-artifacts.yml'
     parameters:
-      artifact_names: $(metadata.artifact_names)
+      artifact_names: $[ metadata.artifact_names ]
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: $(System.DefaultWorkingDirectory)/dist'
