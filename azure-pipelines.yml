@@ -95,7 +95,7 @@ jobs:
       targetPath: $(System.DefaultWorkingDirectory)/dist-temp
   - script: |
       mkdir -p $(System.DefaultWorkingDirectory)/dist
-      cp $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
+      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: $(System.DefaultWorkingDirectory)/dist
