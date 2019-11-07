@@ -85,8 +85,8 @@ jobs:
 - job: deploy
   dependsOn:
   - generator
-  - testFromWheel
-  - testFromSDist
+  # - testFromWheel
+  # - testFromSDist
   variables:
     metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
   steps:
