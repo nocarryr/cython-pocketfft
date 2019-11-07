@@ -3,7 +3,8 @@ parameters:
 
 steps:
   - ${{ each artifact_name in parameters.artifact_names }}:
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        artifact: ${{ artifact_name }}
-        targetPath: $(System.DefaultWorkingDirectory)/dist'
+    - script: echo ${{ artifact_name }}
+    # - task: DownloadPipelineArtifact@2
+    #   inputs:
+    #     artifact: ${{ artifact_name }}
+    #     targetPath: $(System.DefaultWorkingDirectory)/dist'
