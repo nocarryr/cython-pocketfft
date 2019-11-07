@@ -90,10 +90,11 @@ jobs:
   variables:
     metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
   steps:
-  - template: 'ci/templates/gather-artifacts.yml'
-    parameters:
-      artifact_names: $[ variables['metadata.artifact_names'] ]
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: $(System.DefaultWorkingDirectory)/dist'
-      artifactName: dists
+    script: echo $(metadata)
+  # - template: 'ci/templates/gather-artifacts.yml'
+  #   parameters:
+  #     artifact_names: $[ variables['metadata.artifact_names'] ]
+  # - task: PublishBuildArtifacts@1
+  #   inputs:
+  #     pathToPublish: $(System.DefaultWorkingDirectory)/dist'
+  #     artifactName: dists
