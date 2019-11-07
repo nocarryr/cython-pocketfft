@@ -26,6 +26,7 @@ jobs:
         }
         PY_VERSIONS = ['3.5', '3.6', '3.7']
         d = {}
+        artifact_names = []
         for pl_key, pl_img in PLATFORMS.items():
             for py_v in PY_VERSIONS:
                 if py_v == '3.5' and pl_key == 'windows':
@@ -36,8 +37,11 @@ jobs:
                     'python.version':py_v,
                     'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
                 }
+                artifact_names.append(d['artifact_name'])
         s = json.dumps(d)
         print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
+        s = json.dumps({'artifact_names':artifact_names})
+        print('##vso[task.setVariable variable=metadata;isOutput=true]{}'.format(s))
 
 - job: compile
   dependsOn: generator
@@ -77,3 +81,19 @@ jobs:
   - template: 'ci/templates/build-steps.yml'
     parameters:
       test_mode: 'sdist'
+
+- job: deploy
+  dependsOn:
+  - generator
+  - testFromWheel
+  - testFromSDist
+  variables:
+    metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
+  steps:
+  - template: 'ci/templates/gather-artifacts.yml'
+    parameters:
+      artifact_names: $(metadata.artifact_names)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(System.DefaultWorkingDirectory)/dist'
+      artifactName: dists
