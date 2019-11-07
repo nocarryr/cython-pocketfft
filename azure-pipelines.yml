@@ -90,7 +90,7 @@ jobs:
   variables:
     metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
   steps:
-    script: echo $(metadata)
+    - script: echo $(metadata)
   # - template: 'ci/templates/gather-artifacts.yml'
   #   parameters:
   #     artifact_names: $[ variables['metadata.artifact_names'] ]
