@@ -1,8 +1,6 @@
 parameters:
-- name: pre_steps
-  type: stepList
-- name: post_steps
-  type: stepList
+  pre_steps: []
+  post_steps: []
 
 steps:
 - script: echo 'template-pre'
