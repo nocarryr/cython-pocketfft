@@ -89,12 +89,15 @@ jobs:
   # - testFromSDist
   variables:
     metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
+  steps:
   - template: 'ci/templates/gather-artifacts.yml'
     parameters:
-      artifact_names: $[ variables['metadata.artifact_names'] ]
-  steps:
-  - script: echo 'job'
-    displayName: 'job script'
+      pre_steps:
+        - script: echo 'job-pre'
+        displayName: 'job-pre'
+      post_steps:
+        - script: echo 'job-post'
+          displayName: 'job post'
   # - task: PublishBuildArtifacts@1
   #   inputs:
   #     pathToPublish: $(System.DefaultWorkingDirectory)/dist'
