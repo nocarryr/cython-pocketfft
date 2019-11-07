@@ -92,18 +92,11 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@2
     inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist
-  - script: ls $(System.DefaultWorkingDirectory)/dist
-  # - template: 'ci/templates/gather-artifacts.yml'
-  #   parameters:
-  #     artifact_names: $[ dependencies.generator.outputs['strat.metadata.artifact_names'] ]
-  #     pre_steps:
-  #       - script: echo 'job-pre'
-  #         displayName: 'job-pre'
-  #     post_steps:
-  #       - script: echo 'job-post'
-  #         displayName: 'job post'
-  # - task: PublishBuildArtifacts@1
-  #   inputs:
-  #     pathToPublish: $(System.DefaultWorkingDirectory)/dist'
-  #     artifactName: dists
+      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+  - script: |
+    mkdir -p $(System.DefaultWorkingDirectory)/dist
+    cp $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(System.DefaultWorkingDirectory)/dist
+      artifactName: dists
