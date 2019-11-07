@@ -1,13 +1,14 @@
 parameters:
   pre_steps: []
   post_steps: []
+  artifact_names: []
 
 steps:
 - script: echo 'template-pre'
   displayName: 'template-pre'
 - ${{ each pre_step in parameters.pre_steps }}:
     - ${{ pre_step }}
-- ${{ each artifact_name in variables.metadata.artifact_names }}:
+- ${{ each artifact_name in parameters.artifact_names }}:
   - script: echo ${{ artifact_name }}
   # - task: DownloadPipelineArtifact@2
   #   inputs:

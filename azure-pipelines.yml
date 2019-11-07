@@ -92,6 +92,7 @@ jobs:
   steps:
   - template: 'ci/templates/gather-artifacts.yml'
     parameters:
+      artifact_names: $[ dependencies.generator.outputs['strat.metadata.artifact_names'] ]
       pre_steps:
         - script: echo 'job-pre'
           displayName: 'job-pre'
