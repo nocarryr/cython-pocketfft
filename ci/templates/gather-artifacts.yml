@@ -2,7 +2,7 @@ parameters:
   artifact_names: []
 
 steps:
-  - ${{ each artifact_name in parameters.artifact_names }}:
+  - ${{ each artifact_name in variables.metadata.artifact_names }}:
     - script: echo ${{ artifact_name }}
     # - task: DownloadPipelineArtifact@2
     #   inputs:
