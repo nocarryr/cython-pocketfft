@@ -8,7 +8,7 @@ trigger:
 
 variables:
   project_name: 'cython-pocketfft'
-  pypiFeed: 'test-cython-pocketfft'
+  pypiFeed: 'Test PyPI'
 
 jobs:
 - job: generator
