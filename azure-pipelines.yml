@@ -94,7 +94,7 @@ jobs:
     parameters:
       pre_steps:
         - script: echo 'job-pre'
-        displayName: 'job-pre'
+          displayName: 'job-pre'
       post_steps:
         - script: echo 'job-post'
           displayName: 'job post'
