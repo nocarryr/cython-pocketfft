@@ -10,6 +10,7 @@ variables:
   project_name: 'cython-pocketfft'
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
   pypiServiceConnection: 'TestPyPI-service-connection'
+  twineUploadURL: 'https://test.pypi.org/legacy/'
   twineUploadRepo: 'TestPyPI-artifact-feed'
 
 jobs:
@@ -92,14 +93,13 @@ jobs:
   # !!! UNCOMMENT THESE BEFORE ENABLING
   # - testFromWheel
   # - testFromSDist
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - task: DownloadPipelineArtifact@2
     inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist
+      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+  - script: |
+      mkdir -p $(System.DefaultWorkingDirectory)/dist
+      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
@@ -110,5 +110,5 @@ jobs:
     inputs:
       artifactFeed: $(pypiArtifactFeed)
       pythonUploadServiceConnection: $(pypiServiceConnection)
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/$(artifact_name)/*
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --repository-url $(twineUploadURL) --skip-existing dist/*
     displayName: 'twine upload'
