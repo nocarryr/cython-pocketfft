@@ -93,6 +93,8 @@ jobs:
   # !!! UNCOMMENT THESE BEFORE ENABLING
   # - testFromWheel
   # - testFromSDist
+  variables:
+    python.version: '3.7'
   steps:
   - task: DownloadPipelineArtifact@2
     inputs:
