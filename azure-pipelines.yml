@@ -92,27 +92,23 @@ jobs:
   # !!! UNCOMMENT THESE BEFORE ENABLING
   # - testFromWheel
   # - testFromSDist
-  variables:
-    metadata: $[ dependencies.generator.outputs['strat.metadata'] ]
+  pool:
+    vmImage: $(imageName)
+  strategy:
+    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
   steps:
   - task: DownloadPipelineArtifact@2
     inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-  - script: |
-      mkdir -p $(System.DefaultWorkingDirectory)/dist
-      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathToPublish: $(System.DefaultWorkingDirectory)/dist
-      artifactName: dists
+      targetPath: $(System.DefaultWorkingDirectory)/dist
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7'
-    displayName: 'Use Python 3.7'
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
   - script: pip install twine
     displayName: 'install twine'
   - task: TwineAuthenticate@1
     inputs:
       artifactFeed: $(pypiArtifactFeed)
       pythonUploadServiceConnection: $(pypiServiceConnection)
-  - script: twine upload -r $(twineUploadRepo) dist/* --config-file $(PYPIRC_PATH)
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
+    displayName: 'twine upload'
