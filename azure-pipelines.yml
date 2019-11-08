@@ -134,7 +134,5 @@ jobs:
     inputs:
       artifactFeed: $(twineAuthArtifactFeed)
       pythonUploadServiceConnection: $(twineAuthServiceConnection)
-  - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
-    displayName: 'Fix pypirc'
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*.tar.gz
     displayName: 'twine upload'
