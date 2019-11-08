@@ -8,7 +8,9 @@ trigger:
 
 variables:
   project_name: 'cython-pocketfft'
-  pypiFeed: 'TestPyPI'
+  pypiArtifactFeed: 'TestPyPI-artifact-feed'
+  pypiServiceConnection: 'TestPyPI-service-connection'
+  twineUploadRepo: 'TestPyPI-artifact-feed'
 
 jobs:
 - job: generator
@@ -111,5 +113,6 @@ jobs:
     displayName: 'install twine'
   - task: TwineAuthenticate@1
     inputs:
-      pythonUploadServiceConnection: $(pypiFeed)
-  - script: twine upload -r $(pypiFeed) dist/* --config-file $(PYPIRC_PATH)
+      artifactFeed: $(pypiArtifactFeed)
+      pythonUploadServiceConnection: $(pypiServiceConnection)
+  - script: twine upload -r $(twineUploadRepo) dist/* --config-file $(PYPIRC_PATH)
