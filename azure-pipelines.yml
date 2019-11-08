@@ -110,5 +110,5 @@ jobs:
     inputs:
       artifactFeed: $(pypiArtifactFeed)
       pythonUploadServiceConnection: $(pypiServiceConnection)
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/$(artifact_name)/*
     displayName: 'twine upload'
