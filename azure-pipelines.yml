@@ -20,7 +20,19 @@ variables:
   # So this must be the repository argument to give to twine
   pypiEndpointName: 'test-cython-pocketfft'
 
+  # "artifactFeed" parameter for TwineAuthenticate task
+  twineAuthArtifactFeed: ${{ variables.pypiArtifactFeed }}
+
+  # "pythonUploadServiceConnection" parameter for TwineAuthenticate task
+  twineAuthServiceConnection: ${{ variables.pypiServiceConnection }}
+
   # The --repository argument for twine. Seems like this should be $(pypiEndpointName)
+  # But this makes me think it should be $(pypiServiceConnection)...
+  # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/package/twine-authenticate?view=azure-devops#publish-python-distribution-to-official-python-registry
+  #
+  # But this makes me think it should be $(pypiServiceConnection)/$(pypiEndpointName)...
+  # https://github.com/microsoft/azure-pipelines-tasks/blob/ce15c9039fd3cfd340eaad82a5062fcf1d0de1e2/Tasks/TwineAuthenticateV1/task.json#L5
+  # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
 jobs:
@@ -120,7 +132,7 @@ jobs:
     displayName: 'install twine'
   - task: TwineAuthenticate@1
     inputs:
-      artifactFeed: $(pypiArtifactFeed)
-      pythonUploadServiceConnection: $(pypiServiceConnection)
+      artifactFeed: $(twineAuthArtifactFeed)
+      pythonUploadServiceConnection: $(twineAuthServiceConnection)
   - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
     displayName: 'twine upload'
