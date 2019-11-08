@@ -33,7 +33,7 @@ variables:
   # But this makes me think it should be $(pypiServiceConnection)/$(pypiEndpointName)...
   # https://github.com/microsoft/azure-pipelines-tasks/blob/ce15c9039fd3cfd340eaad82a5062fcf1d0de1e2/Tasks/TwineAuthenticateV1/task.json#L5
   # "Add '-r FeedName/EndpointName --config-file..."
-  twineUploadRepo: ${{ variables.pypiServiceConnection }}
+  twineUploadRepo: ${{ variables.pypiEndpointName }}
 
 jobs:
 - job: generator
