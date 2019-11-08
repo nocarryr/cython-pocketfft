@@ -8,10 +8,23 @@ trigger:
 
 variables:
   project_name: 'cython-pocketfft'
+
+  # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
+
+  # Name of a "Pipeline Service Connection" that's set up to upload to PyPI (this is all I should care about)
   pypiServiceConnection: 'TestPyPI-service-connection'
+
+  # The "EndpointName" field for the "Service Connection" above. Tooltip says...
+  # "Unique repository name used for twine upload. Spaces and special characters are not allowed."
+  # So this must be the repository argument to give to twine
+  pypiEndpointName: 'test-cython-pocketfft'
+
+  # Manual override for twine --repository-url
   twineUploadURL: 'https://test.pypi.org/legacy/'
-  twineUploadRepo: 'TestPyPI-artifact-feed'
+
+  # The --repository argument for twine. Seems like this should be $(pypiEndpointName)
+  twineUploadRepo: ${{ variables.pypiEndpointName }}
 
 jobs:
 - job: generator
