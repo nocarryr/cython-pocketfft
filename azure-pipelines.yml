@@ -20,9 +20,6 @@ variables:
   # So this must be the repository argument to give to twine
   pypiEndpointName: 'test-cython-pocketfft'
 
-  # Manual override for twine --repository-url
-  twineUploadURL: 'https://test.pypi.org/legacy/'
-
   # The --repository argument for twine. Seems like this should be $(pypiEndpointName)
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
@@ -125,5 +122,5 @@ jobs:
     inputs:
       artifactFeed: $(pypiArtifactFeed)
       pythonUploadServiceConnection: $(pypiServiceConnection)
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --repository-url $(twineUploadURL) --skip-existing dist/*
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
     displayName: 'twine upload'
