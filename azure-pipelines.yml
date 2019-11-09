@@ -35,16 +35,21 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
-  platforms: {linux:'ubuntu-latest', windows:'windows-latest'}
-  pythonVersions: {a:{dotted:'3.6', number:'36'}, b:{dotted:'3.7', number:'37'}}
-
 stages:
 - stage: 'build'
   jobs:
   - template: 'ci/templates/build-matrix.yml'
     parameters:
-      platforms: $(platforms)
-      pythonVersions: $(pythonVersions)
+      platforms:
+        linux: 'ubuntu-latest'
+        windows: 'windows-latest'
+      pythonVersions:
+        a:
+          dotted: '3.6'
+          number: '36'
+        b:
+          dotted: '3.7'
+          number: '37'
       jobs:
       - job: compile
         pool:
@@ -59,8 +64,16 @@ stages:
   jobs:
   - template: 'ci/templates/build-matrix.yml'
     parameters:
-      platforms: $(platforms)
-      pythonVersions: $(pythonVersions)
+      platforms:
+        linux: 'ubuntu-latest'
+        windows: 'windows-latest'
+      pythonVersions:
+        a:
+          dotted: '3.6'
+          number: '36'
+        b:
+          dotted: '3.7'
+          number: '37'
       jobs:
       - job: testFromWheel
         dependsOn:
