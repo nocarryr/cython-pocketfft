@@ -65,7 +65,6 @@ jobs:
       ls -lh wheelhouse/
       mkdir -p dist
       cp wheelhouse/$(project_name)*.whl dist/.
-    displayName: 'Build wheels'
     - publish: $(System.DefaultWorkingDirectory)/dist
       artifact: $(manylinux.artifact_name)
 
