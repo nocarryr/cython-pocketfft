@@ -35,16 +35,10 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
-  platforms:
+  platforms: {linux:'ubuntu-latest', windows:'windows-latest'}
     linux: 'ubuntu-latest'
     windows: 'windows-latest'
-  pythonVersions:
-    a:
-      dotted: '3.6'
-      number: '36'
-    b:
-      dotted: '3.7'
-      number: '36'
+  pythonVersions: {a:{dotted:'3.6', number:'36'}, b:{dotted:'3.7', number:'37'}}
 
 stages:
 - stage: 'build'
