@@ -35,7 +35,40 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
+  manylinux.artifact_name: 'manywheels'
+
 jobs:
+- job: buildManyLinux
+  pool:
+    vmImage: 'ubuntu-16.04'
+  strategy:
+    matrix:
+      64Bit2010:
+        arch: x86_64
+        plat: manylinux2010_x86_64
+        image: quay.io/pypa/manylinux2010_x86_64
+        python.architecture: x64
+      64Bit:
+        arch: x86_64
+        plat: manylinux1_x86_64
+        image: quay.io/pypa/manylinux1_x86_64
+        python.architecture: x64
+      32Bit:
+        arch: i686
+        plat: manylinux1_i686
+        image: quay.io/pypa/manylinux1_i686
+        python.architecture: x86
+  steps:
+    - script: |
+      set -ex
+      docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build-manywheels.sh
+      ls -lh wheelhouse/
+      mkdir -p dist
+      cp wheelhouse/$(project_name)*.whl dist/.
+    displayName: 'Build wheels'
+    - publish: $(System.DefaultWorkingDirectory)/dist
+      artifact: $(manylinux.artifact_name)
+
 - job: generator
   steps:
   - checkout: none
@@ -85,6 +118,7 @@ jobs:
 - job: testFromWheel
   dependsOn:
   - generator
+  - buildManyLinux
   - compile
   pool:
     vmImage: $(imageName)

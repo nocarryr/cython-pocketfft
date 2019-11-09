@@ -22,7 +22,7 @@ steps:
   - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: $(artifact_name)
 
-- ${{ if eq(parameters.use_cython, 'false') }}:
+- ${{ if and(eq(parameters.use_cython, 'false'), ne(parameters.test_mode, 'wheel')) }}:
   - task: DownloadPipelineArtifact@2
     inputs:
       artifact: $(artifact_name)
@@ -33,6 +33,10 @@ steps:
     displayName: 'Install develop mode'
 
 - ${{ if eq(parameters.test_mode, 'wheel') }}:
+  - task: DownloadPipelineArtifact@2
+    inputs:
+      artifact: $(manylinux.artifact_name)
+      targetPath: $(System.DefaultWorkingDirectory)/dist
   - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install wheel'
 
