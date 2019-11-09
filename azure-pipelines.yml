@@ -35,106 +35,77 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
-jobs:
-- job: generator
-  steps:
-  - checkout: none
-  - task: PythonScript@0
-    name: strat
-    inputs:
-      scriptSource: 'inline'
-      script: |
-        import json
-        PLATFORMS = {
-            'linux':'ubuntu-latest',
-            # 'mac':'macOS-latest',
-            'windows':'windows-latest',
-        }
-        PY_VERSIONS = ['3.5', '3.6', '3.7']
-        d = {}
-        artifact_names = []
-        for pl_key, pl_img in PLATFORMS.items():
-            for py_v in PY_VERSIONS:
-                if py_v == '3.5' and pl_key == 'windows':
-                    continue
-                job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
-                d[job_key] = {
-                    'imageName':pl_img,
-                    'python.version':py_v,
-                    'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
-                }
-                artifact_names.append(d[job_key]['artifact_name'])
-        s = json.dumps(d)
-        print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
-        s = json.dumps({'artifact_names':artifact_names})
-        print('##vso[task.setVariable variable=metadata;isOutput=true]{}'.format(s))
+  platforms:
+    linux: 'ubuntu-latest'
+    windows: 'windows-latest'
+  pythonVersions:
+    a:
+      dotted: '3.6'
+      number: '36'
+    b:
+      dotted: '3.7'
+      number: '36'
 
-- job: compile
-  dependsOn: generator
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - bash: echo $(build_types)
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      use_cython: 'true'
-      test_mode: 'develop'
-
-- job: testFromWheel
-  dependsOn:
-  - generator
-  - compile
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      test_mode: 'wheel'
-
-- job: testFromSDist
-  dependsOn:
-  - generator
-  - compile
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      test_mode: 'sdist'
-
-- job: deploy
-  dependsOn:
-  - generator
-  - compile
-  # !!! UNCOMMENT THESE BEFORE ENABLING
-  # - testFromWheel
-  # - testFromSDist
-  variables:
-    python.version: '3.7'
-  steps:
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-  - script: |
-      mkdir -p $(System.DefaultWorkingDirectory)/dist
-      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-  - script: pip install twine
-    displayName: 'install twine'
-  - task: TwineAuthenticate@1
-    inputs:
-      artifactFeed: $(twineAuthArtifactFeed)
-      pythonUploadServiceConnection: $(twineAuthServiceConnection)
-  - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
-    displayName: 'Fix pypirc'
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*.tar.gz
-    displayName: 'twine upload'
+- stages:
+  - stage: 'build'
+    - template: 'ci/templates/build-matrix.yml'
+      parameters:
+        platforms: $(platforms)
+        pythonVersions: $(pythonVersions)
+        jobs:
+        - job: compile
+          pool:
+            vmImage: $(imageName)
+          steps:
+          - bash: echo $(build_types)
+          - template: 'ci/templates/build-steps.yml'
+            parameters:
+              use_cython: 'true'
+              test_mode: 'develop'
+  - stage: 'test'
+    - template: 'ci/templates/build-matrix.yml'
+      parameters:
+        platforms: $(platforms)
+        pythonVersions: $(pythonVersions)
+        jobs:
+        - job: testFromWheel
+          dependsOn:
+          - compile
+          steps:
+          - template: 'ci/templates/build-steps.yml'
+            parameters:
+              test_mode: 'wheel'
+        - job: testFromSDist
+          dependsOn:
+          - compile
+          pool:
+            vmImage: $(imageName)
+          steps:
+          - template: 'ci/templates/build-steps.yml'
+            parameters:
+              test_mode: 'sdist'
+  - stage: 'deploy'
+    - job: twineUpload
+      variables:
+        python.version: '3.7'
+      steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+      - script: |
+          mkdir -p $(System.DefaultWorkingDirectory)/dist
+          cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
+      - script: pip install twine
+        displayName: 'install twine'
+      - task: TwineAuthenticate@1
+        inputs:
+          artifactFeed: $(twineAuthArtifactFeed)
+          pythonUploadServiceConnection: $(twineAuthServiceConnection)
+      - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
+        displayName: 'Fix pypirc'
+      - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*.tar.gz
+        displayName: 'twine upload'
