@@ -36,8 +36,6 @@ variables:
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
   platforms: {linux:'ubuntu-latest', windows:'windows-latest'}
-    linux: 'ubuntu-latest'
-    windows: 'windows-latest'
   pythonVersions: {a:{dotted:'3.6', number:'36'}, b:{dotted:'3.7', number:'37'}}
 
 stages:
