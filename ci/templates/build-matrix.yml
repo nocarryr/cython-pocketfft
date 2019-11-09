@@ -11,8 +11,8 @@ jobs:
       ${{ pair.key }}: ${{ pair.value }}
   strategy:
     matrix:
-    - ${{ each platform in parameters.platforms }}:
-      - ${{ each pyVersion in parameters.pythonVersions }}:
+    ${{ each platform in parameters.platforms }}:
+      ${{ each pyVersion in parameters.pythonVersions }}:
         ${{ platform.key }}-Python${{ pyVersion.value.dotted }}:
           osName: ${{ platform.key }}
           imageName: ${{ platform.value }}
