@@ -46,7 +46,7 @@ variables:
       dotted: '3.7'
       number: '36'
 
-- stages:
+stages:
 - stage: 'build'
   - template: 'ci/templates/build-matrix.yml'
     parameters:
