@@ -61,7 +61,7 @@ jobs:
   steps:
     - script: |
         set -ex
-        docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build-manywheels.sh
+        docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
         ls -lh wheelhouse/
         mkdir -p dist
         cp wheelhouse/$(project_name)*.whl dist/.
