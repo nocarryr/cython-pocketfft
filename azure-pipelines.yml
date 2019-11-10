@@ -60,11 +60,11 @@ jobs:
         python.architecture: x86
   steps:
     - script: |
-      set -ex
-      docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build-manywheels.sh
-      ls -lh wheelhouse/
-      mkdir -p dist
-      cp wheelhouse/$(project_name)*.whl dist/.
+        set -ex
+        docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build-manywheels.sh
+        ls -lh wheelhouse/
+        mkdir -p dist
+        cp wheelhouse/$(project_name)*.whl dist/.
     - publish: $(System.DefaultWorkingDirectory)/dist
       artifact: $(manylinux.artifact_name)
 
