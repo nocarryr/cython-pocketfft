@@ -11,8 +11,8 @@ pys=(${pys[@]//*34*/})
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
     "${PYBIN}/pip" install -r /io/requirements.txt
-    "${PYBIN}/python /io/setup.py build_ext --inplace --use-cython"
-    "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    "${PYBIN}/python" setup.py sdist --use-cython
+    "${PYBIN}/pip" wheel /io/dist/*.tar.gz -w wheelhouse/
 done
 
 # Bundle external shared libraries into the wheels
