@@ -79,8 +79,6 @@ stages:
     strategy:
       matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
     steps:
-    - checkout: none
-    - bash: echo $(build_types)
     - template: 'ci/templates/build-steps.yml'
       parameters:
         use_cython: 'true'
