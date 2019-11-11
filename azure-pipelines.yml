@@ -36,6 +36,7 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
+  all_dists.artifact_name: 'dist-all'
   manylinux.sdist_artifact_name: 'dist-linux-3.6'
 
 jobs:
@@ -149,6 +150,44 @@ jobs:
     parameters:
       test_mode: 'sdist'
 
+- job: collectDists
+  dependsOn:
+  - compile
+  - buildManyLinux
+  pool:
+    vmImage: 'ubuntu-latest'
+  variables:
+    python.version: '3.7'
+  steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+    - task: PythonScript@0
+      inputs:
+        scriptSource: 'inline'
+        script: |
+          from pathlib import Path
+          SRC_DIR = Path('.') / 'dist-temp'
+          DST_DIR = Path('.') / 'dist'
+          DST_DIR.mkdir(exist_ok=True)
+          for p in SRC_DIR.glob('**/*'):
+              if not p.is_file():
+                  continue
+              if p.suffix == '.whl':
+                  if 'linux' in p.name and 'manylinux' not in p.name:
+                      print(f'{p} skipped')
+                      continue
+              dst_p = DST_DIR / p.name
+              if not dst_p.exists():
+                  print(f'{p} -> {dst_p}')
+                  p.rename(dst_p)
+    - publish: $(System.DefaultWorkingDirectory)/dist
+      artifact: $(all_dists.artifact_name)
+
 - job: deploy
   dependsOn:
   - generator
@@ -156,15 +195,14 @@ jobs:
   - buildManyLinux
   - testFromWheel
   - testFromSDist
+  - collectDists
   variables:
     python.version: '3.7'
   steps:
   - task: DownloadPipelineArtifact@2
     inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-  - script: |
-      mkdir -p $(System.DefaultWorkingDirectory)/dist
-      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
+      artifact: $(all_dists.artifact_name)
+      targetPath: $(System.DefaultWorkingDirectory)/dist
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
