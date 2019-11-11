@@ -20,9 +20,3 @@ ls /io/wheelhouse/
 for whl in /io/wheelhouse/$package_name-*.whl; do
     auditwheel repair --plat $PLAT "$whl" -w /io/wheelhouse/
 done
-
-# Install packages and test
-for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/python" -m pip install $project_name --no-index -f /io/wheelhouse
-    "${PYBIN}/pytest" /io/tests
-done
