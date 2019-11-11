@@ -37,7 +37,6 @@ variables:
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
   manylinux.sdist_artifact_name: 'dist-linux-3.6'
-  manylinux.wheel_artifact_name: 'manywheels'
 
 jobs:
 - job: buildManyLinux
@@ -74,7 +73,7 @@ jobs:
         mkdir -p dist
         cp wheelhouse/$(package_name)*.whl dist/.
     - publish: $(System.DefaultWorkingDirectory)/dist
-      artifact: $(manylinux.wheel_artifact_name)
+      artifact: dist-$(plat)
 
 - job: generator
   steps:
