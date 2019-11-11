@@ -16,8 +16,12 @@ steps:
   - script: python setup.py build_ext --inplace --use-cython
     displayName: 'Build Extenstions'
 
-  - script: python setup.py sdist bdist_wheel
+  - script: python setup.py sdist
     displayName: 'Build dist'
+
+  - ${{ if ne(variables.platform, 'linux') }}:
+    - script: python setup.py bdist_wheel
+      displayName: 'Build wheel'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: $(artifact_name)

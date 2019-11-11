@@ -99,6 +99,7 @@ jobs:
                 job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
                 d[job_key] = {
                     'imageName':pl_img,
+                    'platform':pl_key,
                     'python.version':py_v,
                     'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
                 }
