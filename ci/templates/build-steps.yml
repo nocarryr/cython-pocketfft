@@ -36,9 +36,13 @@ steps:
   - task: DownloadPipelineArtifact@2
     inputs:
       targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-  - script: |
-      mkdir -p $(System.DefaultWorkingDirectory)/dist
-      cp -u $(System.DefaultWorkingDirectory)/dist-temp/**/* $(System.DefaultWorkingDirectory)/dist/
+  - task: CopyFiles@2
+    inputs:
+      sourceFolder: $(System.DefaultWorkingDirectory)/dist-temp
+      contents: '**'
+      targetFolder: $(System.DefaultWorkingDirectory)/dist
+      overWrite: true
+      flattenFolders: true
   - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install wheel'
 
