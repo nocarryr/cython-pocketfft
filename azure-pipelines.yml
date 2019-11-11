@@ -35,10 +35,12 @@ variables:
   # "Add '-r FeedName/EndpointName --config-file..."
   twineUploadRepo: ${{ variables.pypiEndpointName }}
 
-  manylinux.artifact_name: 'manywheels'
+  manylinux.sdist_artifact_name: 'dist-linux-3.6'
+  manylinux.wheel_artifact_name: 'manywheels'
 
 jobs:
 - job: buildManyLinux
+  dependsOn: compile
   pool:
     vmImage: 'ubuntu-16.04'
   strategy:
@@ -59,6 +61,11 @@ jobs:
         image: quay.io/pypa/manylinux1_i686
         python.architecture: x86
   steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: $(manylinux.sdist_artifact_name)
+        targetPath: $(System.DefaultWorkingDirectory)/sdist
+        itemPattern: '*.tar.gz'
     - script: |
         set -ex
         docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
@@ -66,7 +73,7 @@ jobs:
         mkdir -p dist
         cp wheelhouse/$(project_name)*.whl dist/.
     - publish: $(System.DefaultWorkingDirectory)/dist
-      artifact: $(manylinux.artifact_name)
+      artifact: $(manylinux.wheel_artifact_name)
 
 - job: generator
   steps:

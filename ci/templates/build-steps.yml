@@ -35,7 +35,7 @@ steps:
 - ${{ if eq(parameters.test_mode, 'wheel') }}:
   - task: DownloadPipelineArtifact@2
     inputs:
-      artifact: $(manylinux.artifact_name)
+      artifact: $(manylinux.wheel_artifact_name)
       targetPath: $(System.DefaultWorkingDirectory)/dist
   - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install wheel'
