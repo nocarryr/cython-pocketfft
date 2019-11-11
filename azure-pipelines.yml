@@ -153,9 +153,9 @@ jobs:
   dependsOn:
   - generator
   - compile
-  # !!! UNCOMMENT THESE BEFORE ENABLING
-  # - testFromWheel
-  # - testFromSDist
+  - buildManyLinux
+  - testFromWheel
+  - testFromSDist
   variables:
     python.version: '3.7'
   steps:
@@ -177,5 +177,5 @@ jobs:
       pythonUploadServiceConnection: $(twineAuthServiceConnection)
   - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
     displayName: 'Fix pypirc'
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*.tar.gz
+  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
     displayName: 'twine upload'
