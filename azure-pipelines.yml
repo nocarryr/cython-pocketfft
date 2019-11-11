@@ -1,7 +1,3 @@
-# Python package
-# Create and test a Python package on multiple Python versions.
-# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
 - "*"
@@ -42,42 +38,6 @@ variables:
 stages:
 - stage: buildAndTest
   jobs:
-  - job: buildManyLinux
-    dependsOn: compile
-    pool:
-      vmImage: 'ubuntu-16.04'
-    strategy:
-      matrix:
-        64Bit2010:
-          arch: x86_64
-          plat: manylinux2010_x86_64
-          image: quay.io/pypa/manylinux2010_x86_64
-          python.architecture: x64
-        64Bit:
-          arch: x86_64
-          plat: manylinux1_x86_64
-          image: quay.io/pypa/manylinux1_x86_64
-          python.architecture: x64
-        32Bit:
-          arch: i686
-          plat: manylinux1_i686
-          image: quay.io/pypa/manylinux1_i686
-          python.architecture: x86
-    steps:
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          artifact: $(manylinux.sdist_artifact_name)
-          targetPath: $(System.DefaultWorkingDirectory)/sdist
-          itemPattern: '*.tar.gz'
-      - script: |
-          set -ex
-          docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
-          ls -lh wheelhouse/
-          mkdir -p dist
-          cp wheelhouse/$(package_name)*.whl dist/.
-      - publish: $(System.DefaultWorkingDirectory)/dist
-        artifact: dist-$(plat)
-
   - job: generator
     steps:
     - checkout: none
@@ -119,11 +79,48 @@ stages:
     strategy:
       matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
     steps:
+    - checkout: none
     - bash: echo $(build_types)
     - template: 'ci/templates/build-steps.yml'
       parameters:
         use_cython: 'true'
         test_mode: 'develop'
+
+  - job: buildManyLinux
+    dependsOn: compile
+    pool:
+      vmImage: 'ubuntu-16.04'
+    strategy:
+      matrix:
+        64Bit2010:
+          arch: x86_64
+          plat: manylinux2010_x86_64
+          image: quay.io/pypa/manylinux2010_x86_64
+          python.architecture: x64
+        64Bit:
+          arch: x86_64
+          plat: manylinux1_x86_64
+          image: quay.io/pypa/manylinux1_x86_64
+          python.architecture: x64
+        32Bit:
+          arch: i686
+          plat: manylinux1_i686
+          image: quay.io/pypa/manylinux1_i686
+          python.architecture: x86
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: $(manylinux.sdist_artifact_name)
+        targetPath: $(System.DefaultWorkingDirectory)/sdist
+        itemPattern: '*.tar.gz'
+    - script: |
+        set -ex
+        docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
+        ls -lh wheelhouse/
+        mkdir -p dist
+        cp wheelhouse/$(package_name)*.whl dist/.
+    - publish: $(System.DefaultWorkingDirectory)/dist
+      artifact: dist-$(plat)
 
   - job: testFromWheel
     dependsOn:
@@ -163,34 +160,35 @@ stages:
     variables:
       python.version: '3.7'
     steps:
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '$(python.version)'
-        displayName: 'Use Python $(python.version)'
-      - task: PythonScript@0
-        inputs:
-          scriptSource: 'inline'
-          script: |
-            from pathlib import Path
-            SRC_DIR = Path('.') / 'dist-temp'
-            DST_DIR = Path('.') / 'dist'
-            DST_DIR.mkdir(exist_ok=True)
-            for p in SRC_DIR.glob('**/*'):
-                if not p.is_file():
-                    continue
-                if p.suffix == '.whl':
-                    if 'linux' in p.name and 'manylinux' not in p.name:
-                        print(f'{p} skipped')
-                        continue
-                dst_p = DST_DIR / p.name
-                if not dst_p.exists():
-                    print(f'{p} -> {dst_p}')
-                    p.rename(dst_p)
-      - publish: $(System.DefaultWorkingDirectory)/dist
-        artifact: $(all_dists.artifact_name)
+    - checkout: none
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+    - task: PythonScript@0
+      inputs:
+        scriptSource: 'inline'
+        script: |
+          from pathlib import Path
+          SRC_DIR = Path('.') / 'dist-temp'
+          DST_DIR = Path('.') / 'dist'
+          DST_DIR.mkdir(exist_ok=True)
+          for p in SRC_DIR.glob('**/*'):
+              if not p.is_file():
+                  continue
+              if p.suffix == '.whl':
+                  if 'linux' in p.name and 'manylinux' not in p.name:
+                      print(f'{p} skipped')
+                      continue
+              dst_p = DST_DIR / p.name
+              if not dst_p.exists():
+                  print(f'{p} -> {dst_p}')
+                  p.rename(dst_p)
+    - publish: $(System.DefaultWorkingDirectory)/dist
+      artifact: $(all_dists.artifact_name)
 
   - job: deploy
     dependsOn:
@@ -198,6 +196,7 @@ stages:
     variables:
       python.version: '3.7'
     steps:
+    - checkout: none
     - task: DownloadPipelineArtifact@2
       inputs:
         artifact: $(all_dists.artifact_name)
