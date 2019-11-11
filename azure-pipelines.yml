@@ -8,6 +8,7 @@ trigger:
 
 variables:
   project_name: 'cython-pocketfft'
+  package_name: 'cython_pocketfft'
 
   # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
@@ -68,10 +69,10 @@ jobs:
         itemPattern: '*.tar.gz'
     - script: |
         set -ex
-        docker run -e PLAT=$(plat) -e package_name=$(project_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
+        docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
         ls -lh wheelhouse/
         mkdir -p dist
-        cp wheelhouse/$(project_name)*.whl dist/.
+        cp wheelhouse/$(package_name)*.whl dist/.
     - publish: $(System.DefaultWorkingDirectory)/dist
       artifact: $(manylinux.wheel_artifact_name)
 
