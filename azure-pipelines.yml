@@ -39,181 +39,180 @@ variables:
   all_dists.artifact_name: 'dist-all'
   manylinux.sdist_artifact_name: 'dist-linux-3.6'
 
-jobs:
-- job: buildManyLinux
-  dependsOn: compile
-  pool:
-    vmImage: 'ubuntu-16.04'
-  strategy:
-    matrix:
-      64Bit2010:
-        arch: x86_64
-        plat: manylinux2010_x86_64
-        image: quay.io/pypa/manylinux2010_x86_64
-        python.architecture: x64
-      64Bit:
-        arch: x86_64
-        plat: manylinux1_x86_64
-        image: quay.io/pypa/manylinux1_x86_64
-        python.architecture: x64
-      32Bit:
-        arch: i686
-        plat: manylinux1_i686
-        image: quay.io/pypa/manylinux1_i686
-        python.architecture: x86
-  steps:
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        artifact: $(manylinux.sdist_artifact_name)
-        targetPath: $(System.DefaultWorkingDirectory)/sdist
-        itemPattern: '*.tar.gz'
-    - script: |
-        set -ex
-        docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
-        ls -lh wheelhouse/
-        mkdir -p dist
-        cp wheelhouse/$(package_name)*.whl dist/.
-    - publish: $(System.DefaultWorkingDirectory)/dist
-      artifact: dist-$(plat)
+stages:
+- stage: buildAndTest
+  jobs:
+  - job: buildManyLinux
+    dependsOn: compile
+    pool:
+      vmImage: 'ubuntu-16.04'
+    strategy:
+      matrix:
+        64Bit2010:
+          arch: x86_64
+          plat: manylinux2010_x86_64
+          image: quay.io/pypa/manylinux2010_x86_64
+          python.architecture: x64
+        64Bit:
+          arch: x86_64
+          plat: manylinux1_x86_64
+          image: quay.io/pypa/manylinux1_x86_64
+          python.architecture: x64
+        32Bit:
+          arch: i686
+          plat: manylinux1_i686
+          image: quay.io/pypa/manylinux1_i686
+          python.architecture: x86
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          artifact: $(manylinux.sdist_artifact_name)
+          targetPath: $(System.DefaultWorkingDirectory)/sdist
+          itemPattern: '*.tar.gz'
+      - script: |
+          set -ex
+          docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
+          ls -lh wheelhouse/
+          mkdir -p dist
+          cp wheelhouse/$(package_name)*.whl dist/.
+      - publish: $(System.DefaultWorkingDirectory)/dist
+        artifact: dist-$(plat)
 
-- job: generator
-  steps:
-  - checkout: none
-  - task: PythonScript@0
-    name: strat
-    inputs:
-      scriptSource: 'inline'
-      script: |
-        import json
-        PLATFORMS = {
-            'linux':'ubuntu-latest',
-            'mac':'macOS-latest',
-            'windows':'windows-latest',
-        }
-        PY_VERSIONS = ['3.5', '3.6', '3.7']
-        d = {}
-        artifact_names = []
-        for pl_key, pl_img in PLATFORMS.items():
-            for py_v in PY_VERSIONS:
-                if py_v == '3.5' and pl_key == 'windows':
+  - job: generator
+    steps:
+    - checkout: none
+    - task: PythonScript@0
+      name: strat
+      inputs:
+        scriptSource: 'inline'
+        script: |
+          import json
+          PLATFORMS = {
+              'linux':'ubuntu-latest',
+              'mac':'macOS-latest',
+              'windows':'windows-latest',
+          }
+          PY_VERSIONS = ['3.5', '3.6', '3.7']
+          d = {}
+          artifact_names = []
+          for pl_key, pl_img in PLATFORMS.items():
+              for py_v in PY_VERSIONS:
+                  if py_v == '3.5' and pl_key == 'windows':
+                      continue
+                  job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
+                  d[job_key] = {
+                      'imageName':pl_img,
+                      'platform':pl_key,
+                      'python.version':py_v,
+                      'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
+                  }
+                  artifact_names.append(d[job_key]['artifact_name'])
+          s = json.dumps(d)
+          print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
+          s = json.dumps({'artifact_names':artifact_names})
+          print('##vso[task.setVariable variable=metadata;isOutput=true]{}'.format(s))
+
+  - job: compile
+    dependsOn: generator
+    pool:
+      vmImage: $(imageName)
+    strategy:
+      matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+    steps:
+    - bash: echo $(build_types)
+    - template: 'ci/templates/build-steps.yml'
+      parameters:
+        use_cython: 'true'
+        test_mode: 'develop'
+
+  - job: testFromWheel
+    dependsOn:
+    - generator
+    - buildManyLinux
+    - compile
+    pool:
+      vmImage: $(imageName)
+    strategy:
+      matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+    steps:
+    - template: 'ci/templates/build-steps.yml'
+      parameters:
+        test_mode: 'wheel'
+
+  - job: testFromSDist
+    dependsOn:
+    - generator
+    - compile
+    pool:
+      vmImage: $(imageName)
+    strategy:
+      matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+    steps:
+    - template: 'ci/templates/build-steps.yml'
+      parameters:
+        test_mode: 'sdist'
+
+- stage: deploy
+  dependsOn: buildAndTest
+  # !!! FIXME: this needs to be triggered by tags only
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: collectDists
+    pool:
+      vmImage: 'ubuntu-latest'
+    variables:
+      python.version: '3.7'
+    steps:
+      - task: DownloadPipelineArtifact@2
+        inputs:
+          targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(python.version)'
+        displayName: 'Use Python $(python.version)'
+      - task: PythonScript@0
+        inputs:
+          scriptSource: 'inline'
+          script: |
+            from pathlib import Path
+            SRC_DIR = Path('.') / 'dist-temp'
+            DST_DIR = Path('.') / 'dist'
+            DST_DIR.mkdir(exist_ok=True)
+            for p in SRC_DIR.glob('**/*'):
+                if not p.is_file():
                     continue
-                job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
-                d[job_key] = {
-                    'imageName':pl_img,
-                    'platform':pl_key,
-                    'python.version':py_v,
-                    'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
-                }
-                artifact_names.append(d[job_key]['artifact_name'])
-        s = json.dumps(d)
-        print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
-        s = json.dumps({'artifact_names':artifact_names})
-        print('##vso[task.setVariable variable=metadata;isOutput=true]{}'.format(s))
+                if p.suffix == '.whl':
+                    if 'linux' in p.name and 'manylinux' not in p.name:
+                        print(f'{p} skipped')
+                        continue
+                dst_p = DST_DIR / p.name
+                if not dst_p.exists():
+                    print(f'{p} -> {dst_p}')
+                    p.rename(dst_p)
+      - publish: $(System.DefaultWorkingDirectory)/dist
+        artifact: $(all_dists.artifact_name)
 
-- job: compile
-  dependsOn: generator
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - bash: echo $(build_types)
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      use_cython: 'true'
-      test_mode: 'develop'
-
-- job: testFromWheel
-  dependsOn:
-  - generator
-  - buildManyLinux
-  - compile
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      test_mode: 'wheel'
-
-- job: testFromSDist
-  dependsOn:
-  - generator
-  - compile
-  pool:
-    vmImage: $(imageName)
-  strategy:
-    matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
-  steps:
-  - template: 'ci/templates/build-steps.yml'
-    parameters:
-      test_mode: 'sdist'
-
-- job: collectDists
-  dependsOn:
-  - compile
-  - buildManyLinux
-  pool:
-    vmImage: 'ubuntu-latest'
-  variables:
-    python.version: '3.7'
-  steps:
+  - job: deploy
+    dependsOn:
+    - collectDists
+    variables:
+      python.version: '3.7'
+    steps:
     - task: DownloadPipelineArtifact@2
       inputs:
-        targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+        artifact: $(all_dists.artifact_name)
+        targetPath: $(System.DefaultWorkingDirectory)/dist
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '$(python.version)'
       displayName: 'Use Python $(python.version)'
-    - task: PythonScript@0
+    - script: pip install twine
+      displayName: 'install twine'
+    - task: TwineAuthenticate@1
       inputs:
-        scriptSource: 'inline'
-        script: |
-          from pathlib import Path
-          SRC_DIR = Path('.') / 'dist-temp'
-          DST_DIR = Path('.') / 'dist'
-          DST_DIR.mkdir(exist_ok=True)
-          for p in SRC_DIR.glob('**/*'):
-              if not p.is_file():
-                  continue
-              if p.suffix == '.whl':
-                  if 'linux' in p.name and 'manylinux' not in p.name:
-                      print(f'{p} skipped')
-                      continue
-              dst_p = DST_DIR / p.name
-              if not dst_p.exists():
-                  print(f'{p} -> {dst_p}')
-                  p.rename(dst_p)
-    - publish: $(System.DefaultWorkingDirectory)/dist
-      artifact: $(all_dists.artifact_name)
-
-- job: deploy
-  dependsOn:
-  - generator
-  - compile
-  - buildManyLinux
-  - testFromWheel
-  - testFromSDist
-  - collectDists
-  variables:
-    python.version: '3.7'
-  steps:
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      artifact: $(all_dists.artifact_name)
-      targetPath: $(System.DefaultWorkingDirectory)/dist
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
-  - script: pip install twine
-    displayName: 'install twine'
-  - task: TwineAuthenticate@1
-    inputs:
-      artifactFeed: $(twineAuthArtifactFeed)
-      pythonUploadServiceConnection: $(twineAuthServiceConnection)
-  - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
-    displayName: 'Fix pypirc'
-  - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
-    displayName: 'twine upload'
+        artifactFeed: $(twineAuthArtifactFeed)
+        pythonUploadServiceConnection: $(twineAuthServiceConnection)
+    - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
+      displayName: 'Fix pypirc'
+    - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
+      displayName: 'twine upload'
