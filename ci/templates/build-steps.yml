@@ -16,12 +16,8 @@ steps:
   - script: python setup.py build_ext --inplace --use-cython
     displayName: 'Build Extenstions'
 
-  - script: python setup.py sdist
+  - script: python setup.py sdist bdist_wheel
     displayName: 'Build dist'
-
-  - ${{ if xor(ne(variables.platform, 'linux'), not(variables['manylinux.enabled'])) }}:
-    - script: python setup.py bdist_wheel
-      displayName: 'Build wheel'
 
   - publish: $(System.DefaultWorkingDirectory)/dist
     artifact: $(artifact_name)
@@ -47,6 +43,11 @@ steps:
       targetFolder: $(System.DefaultWorkingDirectory)/dist
       overWrite: true
       flattenFolders: true
+
+  - ${{ if and(eq(variables.platform, 'linux'), variables['manylinux.enabled']) }}:
+    - script: rm dist/*-linux_*.whl
+      displayName: 'Remove platform wheels'
+
   - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
     displayName: 'Install wheel'
 
