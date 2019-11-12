@@ -7,6 +7,7 @@ variables:
   package_name: 'cython_pocketfft'
 
   is_master_branch: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/master') }}
+  manylinux.enabled: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/master') }}
 
   # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
@@ -57,6 +58,7 @@ stages:
 
   - job: buildManyLinux
     dependsOn: compile
+    condition: and(succeeded(), variables['manylinux.enabled'])
     pool:
       vmImage: 'ubuntu-16.04'
     strategy:

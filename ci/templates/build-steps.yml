@@ -19,7 +19,7 @@ steps:
   - script: python setup.py sdist
     displayName: 'Build dist'
 
-  - ${{ if ne(variables.platform, 'linux') }}:
+  - ${{ if xor(ne(variables.platform, 'linux'), not(variables['manylinux.enabled'])) }}:
     - script: python setup.py bdist_wheel
       displayName: 'Build wheel'
 
