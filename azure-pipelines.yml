@@ -58,7 +58,7 @@ stages:
 
   - job: buildManyLinux
     dependsOn: compile
-    condition: variables['manylinux.enabled']
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     pool:
       vmImage: 'ubuntu-16.04'
     strategy:
