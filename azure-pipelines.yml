@@ -40,7 +40,11 @@ stages:
   jobs:
   - job: generator
     steps:
-    - checkout: none
+    - script: |
+        BUILD_IS_TAG='true'
+        git describe --tags --candidates=0 || BUILD_IS_TAG='false'
+        echo "##vso[task.setvariable variable=BUILD_IS_TAG;isOutput=true]$BUILD_IS_TAG"
+      name: tag_check
     - task: PythonScript@0
       name: strat
       inputs:
@@ -149,8 +153,11 @@ stages:
 
 - stage: deploy
   dependsOn: buildAndTest
-  # !!! FIXME: this needs to be triggered by tags only
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  condition: |
+    and(
+      eq(variables['Build.SourceBranch'], 'refs/heads/master'),
+      eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'])
+    )
   jobs:
   - job: collectDists
     pool:
