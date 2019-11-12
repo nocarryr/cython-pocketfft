@@ -57,5 +57,11 @@ steps:
 - script: python build_tests.py
   displayName: 'Build Tests'
 
-- script: py.test
+- script: py.test --junitxml=junit/test-results.xml
   displayName: 'Run Tests'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python$(python.version)-$(platform)'
