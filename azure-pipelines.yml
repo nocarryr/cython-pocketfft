@@ -127,6 +127,7 @@ stages:
 - stage: test
   jobs:
   - job: testFromWheel
+    dependsOn: generator
     pool:
       vmImage: $(imageName)
     strategy:
@@ -137,6 +138,7 @@ stages:
         test_mode: 'wheel'
 
   - job: testFromSDist
+    dependsOn: generator
     pool:
       vmImage: $(imageName)
     strategy:
@@ -147,6 +149,7 @@ stages:
         test_mode: 'sdist'
 
 - stage: deploy
+  dependsOn: generator
   condition: |
     and(
       eq(variables['Build.SourceBranch'], 'refs/heads/master'),
