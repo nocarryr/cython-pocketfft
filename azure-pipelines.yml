@@ -6,6 +6,8 @@ variables:
   project_name: 'cython-pocketfft'
   package_name: 'cython_pocketfft'
 
+  is_master_branch: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/master') }}
+
   # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
 
@@ -40,42 +42,7 @@ stages:
   jobs:
   - job: generator
     steps:
-    - script: |
-        BUILD_IS_TAG='true'
-        git describe --tags --candidates=0 || BUILD_IS_TAG='false'
-        echo "##vso[task.setvariable variable=BUILD_IS_TAG;isOutput=true]$BUILD_IS_TAG"
-      name: tag_check
-    - task: PythonScript@0
-      name: strat
-      inputs:
-        scriptSource: 'inline'
-        script: |
-          import json
-          PLATFORMS = {
-              'linux':'ubuntu-latest',
-              'mac':'macOS-latest',
-              'windows':'windows-latest',
-          }
-          PY_VERSIONS = ['3.5', '3.6', '3.7']
-          d = {}
-          artifact_names = []
-          for pl_key, pl_img in PLATFORMS.items():
-              for py_v in PY_VERSIONS:
-                  if py_v == '3.5' and pl_key == 'windows':
-                      continue
-                  job_key = '{}-Python{}'.format(pl_key, ''.join(py_v.split('.')))
-                  d[job_key] = {
-                      'imageName':pl_img,
-                      'platform':pl_key,
-                      'python.version':py_v,
-                      'artifact_name':'dist-{}-{}'.format(pl_key, py_v)
-                  }
-                  artifact_names.append(d[job_key]['artifact_name'])
-          s = json.dumps(d)
-          print('##vso[task.setVariable variable=mtrx;isOutput=true]{}'.format(s))
-          s = json.dumps({'artifact_names':artifact_names})
-          print('##vso[task.setVariable variable=metadata;isOutput=true]{}'.format(s))
-
+    - template: 'ci/templates/stage-variable-steps.yml'
   - job: compile
     dependsOn: generator
     pool:
@@ -126,6 +93,10 @@ stages:
 
 - stage: test
   jobs:
+  - job: generator
+    steps:
+    - template: 'ci/templates/stage-variable-steps.yml'
+
   - job: testFromWheel
     dependsOn: generator
     pool:
@@ -149,14 +120,14 @@ stages:
         test_mode: 'sdist'
 
 - stage: deploy
-  dependsOn: generator
-  condition: |
-    and(
-      eq(variables['Build.SourceBranch'], 'refs/heads/master'),
-      eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true')
-    )
   jobs:
+  - job: generator
+    steps:
+    - template: 'ci/templates/stage-variable-steps.yml'
+
   - job: collectDists
+    dependsOn: generator
+    condition: and(variables['is_master_branch'], eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true'))
     pool:
       vmImage: 'ubuntu-latest'
     variables:
@@ -194,7 +165,9 @@ stages:
 
   - job: deploy
     dependsOn:
+    - generator
     - collectDists
+    condition: and(variables['is_master_branch'], eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true'))
     variables:
       python.version: '3.7'
     steps:
