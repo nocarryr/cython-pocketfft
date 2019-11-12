@@ -147,7 +147,6 @@ stages:
         test_mode: 'sdist'
 
 - stage: deploy
-  dependsOn: buildAndTest
   condition: |
     and(
       eq(variables['Build.SourceBranch'], 'refs/heads/master'),
