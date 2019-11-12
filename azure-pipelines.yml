@@ -156,7 +156,7 @@ stages:
   condition: |
     and(
       eq(variables['Build.SourceBranch'], 'refs/heads/master'),
-      eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'])
+      eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true')
     )
   jobs:
   - job: collectDists
