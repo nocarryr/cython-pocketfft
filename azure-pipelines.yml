@@ -58,7 +58,7 @@ stages:
 
   - job: buildManyLinux
     dependsOn: compile
-    condition: and(succeeded(), variables['manylinux.enabled'])
+    condition: variables['manylinux.enabled']
     pool:
       vmImage: 'ubuntu-16.04'
     strategy:
