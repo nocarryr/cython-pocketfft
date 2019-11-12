@@ -36,7 +36,7 @@ variables:
   manylinux.sdist_artifact_name: 'dist-linux-3.6'
 
 stages:
-- stage: buildAndTest
+- stage: build
   jobs:
   - job: generator
     steps:
@@ -124,11 +124,9 @@ stages:
     - publish: $(System.DefaultWorkingDirectory)/dist
       artifact: dist-$(plat)
 
+- stage: test
+  jobs:
   - job: testFromWheel
-    dependsOn:
-    - generator
-    - buildManyLinux
-    - compile
     pool:
       vmImage: $(imageName)
     strategy:
@@ -139,9 +137,6 @@ stages:
         test_mode: 'wheel'
 
   - job: testFromSDist
-    dependsOn:
-    - generator
-    - compile
     pool:
       vmImage: $(imageName)
     strategy:
