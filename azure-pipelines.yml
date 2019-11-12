@@ -6,8 +6,8 @@ variables:
   project_name: 'cython-pocketfft'
   package_name: 'cython_pocketfft'
 
-  is_master_branch: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/master') }}
-  manylinux.enabled: ${{ eq(variables['Build.SourceBranch'], 'refs/heads/master') }}
+  is_master_branch: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
+  manylinux.enabled: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
 
   # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
