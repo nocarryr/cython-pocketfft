@@ -47,7 +47,7 @@ steps:
         with open('.coveralls.yaml', 'w') as f:
             f.write(yaml.dump(conf, Dumper=yaml.Dumper))
 
-- bash: COVERALLS_REPO_TOKEN=$(MAPPED_REPO_TOKEN) coveralls
+- bash: coveralls
   env:
-    MAPPED_REPO_TOKEN: $(coveralls.repo_token)
+    COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
   displayName: Coveralls
