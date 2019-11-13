@@ -114,7 +114,9 @@ stages:
     - template: 'ci/templates/coverage-test.yml'
 
   - job: testFromWheel
-    dependsOn: generator
+    dependsOn:
+    - generator
+    - testCoverage
     pool:
       vmImage: $(imageName)
     strategy:
@@ -125,7 +127,9 @@ stages:
         test_mode: 'wheel'
 
   - job: testFromSDist
-    dependsOn: generator
+    dependsOn:
+    - generator
+    - testCoverage
     pool:
       vmImage: $(imageName)
     strategy:
