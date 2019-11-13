@@ -1,0 +1,32 @@
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
+- script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
+  displayName: 'Install dependencies'
+
+- script: python setup.py build_ext --inplace --use-cython --cython-trace
+  displayName: 'Build Extenstions'
+
+- script: pip install -e .
+  displayName: 'Install develop mode'
+
+- script: python build_tests.py
+  displayName: 'Build Tests'
+
+- script: py.test --junitxml=junit/test-results.xml --cov-config=.coveragerc --cov=cypocketfft --cov-report html --cov-report xml
+  displayName: 'Run coverage tests'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python $(python.version)'
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'

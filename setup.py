@@ -10,6 +10,15 @@ if USE_CYTHON:
     sys.argv.remove('--use-cython')
     from Cython.Build import cythonize
 
+CYTHON_TRACE = '--cython-trace' in sys.argv
+if CYTHON_TRACE:
+    sys.argv.remove('--cython-trace')
+    if not USE_CYTHON:
+        from Cython.Build import cythonize
+    EXT_MACROS = [('CYTHON_TRACE_NOGIL', '1'), ('CYTHON_TRACE', '1')]
+else:
+    EXT_MACROS = []
+
 PROJECT_PATH = Path(__file__).parent
 WIN32 = sys.platform == 'win32'
 IS_BUILD = len({'sdist', 'bdist_wheel', 'build_ext'} & set(sys.argv)) > 0
@@ -113,11 +122,13 @@ if USE_CYTHON:
             'cypocketfft.fft',
             ['src/cypocketfft/fft.pyx'],
             include_dirs=INCLUDE_PATH,
+            define_macros=EXT_MACROS,
         ),
         Extension(
             'cypocketfft.plancache',
             ['src/cypocketfft/plancache.pyx'],
             include_dirs=INCLUDE_PATH,
+            define_macros=EXT_MACROS,
         ),
         Extension(
             'cypocketfft.wrapper',
@@ -125,6 +136,7 @@ if USE_CYTHON:
             include_dirs=INCLUDE_PATH,
             extra_compile_args=['-std=c99'],
             extra_link_args=['-std=c99'],
+            define_macros=EXT_MACROS,
         )
     ]
     ext_modules = cythonize(
@@ -132,6 +144,7 @@ if USE_CYTHON:
         annotate=True,
         compiler_directives={
             'embedsignature':True,
+            'linetrace':CYTHON_TRACE,
         },
     )
 else:
