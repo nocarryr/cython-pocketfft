@@ -30,3 +30,24 @@ steps:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
     reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+- script: pip install PyYaml coveralls
+  displayName: Install coveralls
+
+- task: PythonScript@0
+  displayName: Write coveralls config
+  inputs:
+    scriptSource: 'inline'
+    script: |
+        import os
+        import yaml
+        keys = {key:'_'.join(['COVERALLS', key.upper()]) for key in ['service_name', 'service_job_id']}
+        conf = {key:os.environ[envkey] for key, envkey in keys.items()}
+        conf['parallel'] = True
+        with open('.coveralls.yaml', 'w') as f:
+            f.write(yaml.dump(conf, Dumper=yaml.Dumper))
+
+- bash: COVERALLS_REPO_TOKEN=$(MAPPED_REPO_TOKEN) coveralls
+  env:
+    MAPPED_REPO_TOKEN: $(coveralls.repo_token)
+  displayName: Coveralls

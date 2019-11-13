@@ -101,6 +101,11 @@ stages:
 
   - job: testCoverage
     dependsOn: generator
+    variables:
+      coveralls.service_name: 'azure-pipelines'
+      coveralls.parallel: true
+      coveralls.service_job_id: $(Build.BuildId)
+      # TODO: coveralls.service_pull_request:
     pool:
       vmImage: $(imageName)
     strategy:
