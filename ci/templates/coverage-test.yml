@@ -16,7 +16,7 @@ steps:
 - script: python build_tests.py
   displayName: 'Build Tests'
 
-- script: py.test --junitxml=junit/test-results.xml --cov-config=.coveragerc --cov=cypocketfft --cov-report html --cov-report xml
+- script: py.test --junitxml=junit/test-results.xml --cov-config=.coveragerc --cov=cypocketfft --cov-report xml
   displayName: 'Run coverage tests'
 
 - task: PublishTestResults@2
