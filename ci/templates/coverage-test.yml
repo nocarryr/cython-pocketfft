@@ -40,7 +40,7 @@ steps:
     script: |
         import os
         import yaml
-        keys = {key:'_'.join(['COVERALLS', key.upper()]) for key in ['service_name', 'service_number' 'service_job_id']}
+        keys = {key:'_'.join(['COVERALLS', key.upper()]) for key in ['service_name', 'service_number', 'service_job_id']}
         conf = {key:os.environ[envkey] for key, envkey in keys.items()}
         conf['parallel'] = True
         print('coveralls config: {}'.format(conf))
