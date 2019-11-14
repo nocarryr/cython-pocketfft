@@ -46,7 +46,7 @@ stages:
   jobs:
   - job: generator
     steps:
-    - template: 'ci/templates/stage-variable-steps.yml'
+    - template: 'ci/templates/job-variable-steps.yml'
   - job: compile
     dependsOn: generator
     pool:
@@ -102,7 +102,7 @@ stages:
   jobs:
   - job: generator
     steps:
-    - template: 'ci/templates/stage-variable-steps.yml'
+    - template: 'ci/templates/job-variable-steps.yml'
 
   - job: testCoverage
     dependsOn: generator
@@ -156,7 +156,7 @@ stages:
   jobs:
   - job: generator
     steps:
-    - template: 'ci/templates/stage-variable-steps.yml'
+    - template: 'ci/templates/job-variable-steps.yml'
 
   - job: collectDists
     dependsOn: generator
