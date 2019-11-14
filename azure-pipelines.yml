@@ -113,6 +113,16 @@ stages:
     steps:
     - template: 'ci/templates/coverage-test.yml'
 
+  - job: submitCoveralls
+    dependsOn: testCoverage
+    condition: succeededOrFailed()
+    steps:
+    - checkout: none
+    - script: curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_JOB_ID&payload[status]=done"
+      env:
+        COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
+        COVERALLS_SERVICE_JOB_ID: $(Build.BuildId)
+
   - job: testFromWheel
     dependsOn:
     - generator
