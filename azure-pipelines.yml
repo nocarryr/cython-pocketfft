@@ -6,6 +6,9 @@ variables:
   project_name: 'cython-pocketfft'
   package_name: 'cython_pocketfft'
 
+  coveralls.service_name: 'azure-pipelines'
+  coveralls.parallel: true
+
   is_master_branch: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
   manylinux.enabled: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
 
@@ -94,6 +97,8 @@ stages:
       artifact: dist-$(plat)
 
 - stage: test
+  variables:
+    coveralls.service_number: $(Build.BuildId)
   jobs:
   - job: generator
     steps:
@@ -102,9 +107,7 @@ stages:
   - job: testCoverage
     dependsOn: generator
     variables:
-      coveralls.service_name: 'azure-pipelines'
-      coveralls.parallel: true
-      coveralls.service_job_id: $(Build.BuildId)
+      coveralls.service_job_id: $(System.JobId)
       # TODO: coveralls.service_pull_request:
     pool:
       vmImage: $(imageName)
@@ -118,10 +121,10 @@ stages:
     condition: succeededOrFailed()
     steps:
     - checkout: none
-    - script: curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_JOB_ID&payload[status]=done"
+    - script: curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_NUMBER&payload[status]=done"
       env:
         COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
-        COVERALLS_SERVICE_JOB_ID: $(Build.BuildId)
+        COVERALLS_SERVICE_NUMBER: $(coveralls.service_number)
 
   - job: testFromWheel
     dependsOn:
