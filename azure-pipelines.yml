@@ -9,9 +9,6 @@ variables:
   coveralls.service_name: 'azure-pipelines'
   coveralls.parallel: true
 
-  is_master_branch: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
-  manylinux.enabled: $[ eq(variables['Build.SourceBranch'], 'refs/heads/master') ]
-
   # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
   pypiArtifactFeed: 'TestPyPI-artifact-feed'
 
@@ -43,6 +40,8 @@ variables:
 
 stages:
 - stage: build
+  variables:
+  - template: 'ci/templates/stage-vars.yml'
   jobs:
   - job: generator
     steps:
@@ -61,7 +60,7 @@ stages:
 
   - job: buildManyLinux
     dependsOn: compile
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    condition: $(manylinux.enabled)
     pool:
       vmImage: 'ubuntu-16.04'
     strategy:
@@ -98,7 +97,10 @@ stages:
 
 - stage: test
   variables:
-    coveralls.service_number: $(Build.BuildId)
+  - template: 'ci/templates/stage-vars.yml'
+    parameters:
+      extraVars:
+        coveralls.service_number: $(Build.BuildId)
   jobs:
   - job: generator
     steps:
@@ -153,6 +155,8 @@ stages:
         test_mode: 'sdist'
 
 - stage: deploy
+  variables:
+  - template: 'ci/templates/stage-vars.yml'
   jobs:
   - job: generator
     steps:
