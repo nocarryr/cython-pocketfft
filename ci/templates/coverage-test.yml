@@ -44,7 +44,7 @@ steps:
         keys = {key:'_'.join(['COVERALLS', key.upper()]) for key in ['service_name', 'service_job_id']}
         conf = {key:os.environ[envkey] for key, envkey in keys.items()}
         conf['parallel'] = True
-        with open('.coveralls.yaml', 'w') as f:
+        with open('.coveralls.yml', 'w') as f:
             f.write(yaml.dump(conf, Dumper=yaml.Dumper))
 
 - bash: coveralls
