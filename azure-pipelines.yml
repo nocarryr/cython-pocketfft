@@ -65,7 +65,7 @@ stages:
 
       - job: buildManyLinux
         dependsOn: compile
-        condition: and(succeeded(), variables['manylinux.enabled'])
+        condition: and(succeeded(), eq(variables['manylinux.enabled'], 'true'))
         pool:
           vmImage: 'ubuntu-16.04'
         strategy:
@@ -161,7 +161,7 @@ stages:
     parameters:
       jobs:
       - job: collectDists
-        condition: and(variables['is_master_branch'], variables['tag_check.BUILD_IS_TAG'])
+        condition: and(eq(variables['is_master_branch'], 'true'), eq(variables['tag_check.BUILD_IS_TAG'], 'true'))
         pool:
           vmImage: 'ubuntu-latest'
         variables:
@@ -179,14 +179,14 @@ stages:
             overWrite: true
             flattenFolders: true
         - script: rm dist/*-linux_*.whl
-          condition: variables['manylinux.enabled']
+          condition: eq(variables['manylinux.enabled'], 'true')
           displayName: 'Remove platform wheels'
         - publish: $(System.DefaultWorkingDirectory)/dist
           artifact: $(all_dists.artifact_name)
 
       - job: deploy
         dependsOn: collectDists
-        condition: and(succeeded(), variables['is_master_branch'], variables['tag_check.BUILD_IS_TAG'])
+        condition: and(succeeded(), eq(variables['is_master_branch'], 'true'), eq(variables['tag_check.BUILD_IS_TAG'], 'true'))
         variables:
           python.version: '3.7'
         steps:

@@ -44,7 +44,7 @@ steps:
       overWrite: true
       flattenFolders: true
 
-  - ${{ if and(eq(variables.platform, 'linux'), variables['manylinux.enabled']) }}:
+  - ${{ if and(eq(variables.platform, 'linux'), eq(variables['manylinux.enabled'], 'true')) }}:
     - script: rm dist/*-linux_*.whl
       displayName: 'Remove platform wheels'
 
