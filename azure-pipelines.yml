@@ -50,7 +50,7 @@ stages:
         pool:
           vmImage: $(imageName)
         strategy:
-          matrix: $(strat.mtrx)
+          matrix: $[ variables['strat.mtrx'] ]
         steps:
         - script: |
             echo 'is_master_branch: "$(is_master_branch)"'
@@ -118,7 +118,7 @@ stages:
         pool:
           vmImage: $(imageName)
         strategy:
-          matrix: $(strat.mtrx)
+          matrix: $[ variables['strat.mtrx'] ]
         steps:
         - template: 'coverage-test.yml'
 
@@ -137,7 +137,7 @@ stages:
         pool:
           vmImage: $(imageName)
         strategy:
-          matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+          matrix: $[ variables['strat.mtrx'] ]
         steps:
         - template: 'build-steps.yml'
           parameters:
@@ -148,7 +148,7 @@ stages:
         pool:
           vmImage: $(imageName)
         strategy:
-          matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
+          matrix: $[ variables['strat.mtrx'] ]
         steps:
         - template: 'build-steps.yml'
           parameters:
