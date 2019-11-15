@@ -43,7 +43,7 @@ stages:
   variables:
   - template: 'ci/templates/stage-vars.yml'
   jobs:
-  - template: 'ci/job-variable-steps.yml'
+  - template: 'ci/templates/job-variable-steps.yml'
     parameters:
       jobs:
       - job: compile
@@ -108,7 +108,7 @@ stages:
       extraVars:
         coveralls.service_number: $(Build.BuildId)
   jobs:
-  - template: 'ci/job-variable-steps.yml'
+  - template: 'ci/templates/job-variable-steps.yml'
     parameters:
       jobs:
       - job: testCoverage
@@ -158,7 +158,7 @@ stages:
   variables:
   - template: 'ci/templates/stage-vars.yml'
   jobs:
-  - template: 'ci/job-variable-steps.yml'
+  - template: 'ci/templates/job-variable-steps.yml'
     parameters:
       jobs:
       - job: collectDists
