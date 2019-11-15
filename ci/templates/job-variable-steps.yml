@@ -49,7 +49,10 @@ jobs:
       - ${{ if job.dependsOn }}:
         - ${{ job.dependsOn }}
     variables:
-      BUILD_IS_TAG: $[ eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true') ]
+      ${{ if eq(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true') }}:
+        BUILD_IS_TAG: true
+      ${{ if ne(dependencies.generator.outputs['tag_check.BUILD_IS_TAG'], 'true') }}:
+        BUILD_IS_TAG: false
       strat.mtrx: $[ dependencies.generator.outputs['strat.mtrx'] ]
       ${{ if job.variables }}:
         ${{ insert }}: ${{ job.variables }}
