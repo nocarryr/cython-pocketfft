@@ -50,4 +50,5 @@ steps:
 - bash: coveralls
   env:
     COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
+    GIT_BRANCH: $(Build.SourceBranchName)
   displayName: Coveralls
