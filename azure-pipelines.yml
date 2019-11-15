@@ -58,7 +58,6 @@ stages:
             echo 'BUILD_IS_TAG: "$(BUILD_IS_TAG)"'
             echo 'Build.SourceBranch: "$(Build.SourceBranch)"'
             echo 'strat.mtrx: "$(strat.mtrx)"'
-            false
         - template: 'build-steps.yml'
           parameters:
             use_cython: 'true'
