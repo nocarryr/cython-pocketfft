@@ -46,6 +46,13 @@ stages:
   - job: generator
     steps:
     - template: 'ci/templates/job-variable-steps.yml'
+    - script: |
+        echo 'is_master_branch: "$(is_master_branch)"'
+        echo 'manylinux.enabled: "$(manylinux.enabled)"'
+        echo 'BUILD_IS_TAG: "$(BUILD_IS_TAG)"'
+        echo 'Build.SourceBranch: "$(Build.SourceBranch)"'
+        false
+
   - job: compile
     dependsOn: generator
     pool:
