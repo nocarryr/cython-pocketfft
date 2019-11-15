@@ -98,3 +98,5 @@ src/cypocketfft/*.html
 tests/*.c
 tests/*.cpp
 tests/*.html
+
+.coveralls.yaml

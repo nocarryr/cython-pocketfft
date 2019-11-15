@@ -1,0 +1,211 @@
+
+trigger:
+- "*"
+
+variables:
+  project_name: 'cython-pocketfft'
+  package_name: 'cython_pocketfft'
+
+  coveralls.service_name: 'azure-pipelines'
+  coveralls.parallel: true
+
+  # Name of an "Azure Pipeline Artifact Feed" (do I care about this?)
+  pypiArtifactFeed: 'TestPyPI-artifact-feed'
+
+  # Name of a "Pipeline Service Connection" that's set up to upload to PyPI (this is all I should care about)
+  pypiServiceConnection: 'TestPyPI-service-connection'
+
+  # The "EndpointName" field for the "Service Connection" above. Tooltip says...
+  # "Unique repository name used for twine upload. Spaces and special characters are not allowed."
+  # So this must be the repository argument to give to twine
+  pypiEndpointName: 'test-cython-pocketfft'
+
+  # "artifactFeed" parameter for TwineAuthenticate task
+  twineAuthArtifactFeed: ${{ variables.pypiArtifactFeed }}
+
+  # "pythonUploadServiceConnection" parameter for TwineAuthenticate task
+  twineAuthServiceConnection: ${{ variables.pypiServiceConnection }}
+
+  # The --repository argument for twine. Seems like this should be $(pypiEndpointName)
+  # But this makes me think it should be $(pypiServiceConnection)...
+  # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/package/twine-authenticate?view=azure-devops#publish-python-distribution-to-official-python-registry
+  #
+  # But this makes me think it should be $(pypiServiceConnection)/$(pypiEndpointName)...
+  # https://github.com/microsoft/azure-pipelines-tasks/blob/ce15c9039fd3cfd340eaad82a5062fcf1d0de1e2/Tasks/TwineAuthenticateV1/task.json#L5
+  # "Add '-r FeedName/EndpointName --config-file..."
+  twineUploadRepo: ${{ variables.pypiEndpointName }}
+
+  all_dists.artifact_name: 'dist-all'
+  manylinux.sdist_artifact_name: 'dist-linux-3.6'
+
+stages:
+- stage: build
+  variables:
+  - template: 'ci/templates/stage-vars.yml'
+  jobs:
+  - template: 'ci/templates/job-variable-steps.yml'
+    parameters:
+      jobs:
+      - job: compile
+        pool:
+          vmImage: $(imageName)
+        strategy:
+          matrix: $[ variables['strat.mtrx'] ]
+        steps:
+        - script: |
+            echo 'is_master_branch: "$(is_master_branch)"'
+            echo 'manylinux.enabled: "$(manylinux.enabled)"'
+            echo 'BUILD_IS_TAG: "$(BUILD_IS_TAG)"'
+            echo 'Build.SourceBranch: "$(Build.SourceBranch)"'
+            echo 'strat.mtrx: "$(strat.mtrx)"'
+        - template: 'build-steps.yml'
+          parameters:
+            use_cython: 'true'
+            test_mode: 'develop'
+
+      - job: buildManyLinux
+        dependsOn: compile
+        condition: and(succeeded(), eq(variables['manylinux.enabled'], 'true'))
+        pool:
+          vmImage: 'ubuntu-16.04'
+        strategy:
+          matrix:
+            64Bit2010:
+              arch: x86_64
+              plat: manylinux2010_x86_64
+              image: quay.io/pypa/manylinux2010_x86_64
+              python.architecture: x64
+            64Bit:
+              arch: x86_64
+              plat: manylinux1_x86_64
+              image: quay.io/pypa/manylinux1_x86_64
+              python.architecture: x64
+            32Bit:
+              arch: i686
+              plat: manylinux1_i686
+              image: quay.io/pypa/manylinux1_i686
+              python.architecture: x86
+        steps:
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifact: $(manylinux.sdist_artifact_name)
+            targetPath: $(System.DefaultWorkingDirectory)/sdist
+            itemPattern: '*.tar.gz'
+        - script: |
+            set -ex
+            docker run -e PLAT=$(plat) -e project_name=$(project_name) -e package_name=$(package_name) --rm -v `pwd`:/io $(image) /io/ci/build_manywheels.sh
+            ls -lh wheelhouse/
+            mkdir -p dist
+            cp wheelhouse/$(package_name)*.whl dist/.
+        - publish: $(System.DefaultWorkingDirectory)/dist
+          artifact: dist-$(plat)
+
+- stage: test
+  variables:
+  - template: 'ci/templates/stage-vars.yml'
+    parameters:
+      extraVars:
+        coveralls.service_number: $(Build.BuildId)
+  jobs:
+  - template: 'ci/templates/job-variable-steps.yml'
+    parameters:
+      jobs:
+      - job: testCoverage
+        variables:
+          coveralls.service_job_id: $(System.JobId)
+          # TODO: coveralls.service_pull_request:
+        pool:
+          vmImage: $(imageName)
+        strategy:
+          matrix: $[ variables['strat.mtrx'] ]
+        steps:
+        - template: 'coverage-test.yml'
+
+      - job: submitCoveralls
+        dependsOn: testCoverage
+        condition: succeededOrFailed()
+        steps:
+        - checkout: none
+        - script: curl -k https://coveralls.io/webhook?repo_token=$COVERALLS_REPO_TOKEN -d "payload[build_num]=$COVERALLS_SERVICE_NUMBER&payload[status]=done"
+          env:
+            COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
+            COVERALLS_SERVICE_NUMBER: $(coveralls.service_number)
+
+      - job: testFromWheel
+        dependsOn: testCoverage
+        pool:
+          vmImage: $(imageName)
+        strategy:
+          matrix: $[ variables['strat.mtrx'] ]
+        steps:
+        - template: 'build-steps.yml'
+          parameters:
+            test_mode: 'wheel'
+
+      - job: testFromSDist
+        dependsOn: testCoverage
+        pool:
+          vmImage: $(imageName)
+        strategy:
+          matrix: $[ variables['strat.mtrx'] ]
+        steps:
+        - template: 'build-steps.yml'
+          parameters:
+            test_mode: 'sdist'
+
+- stage: deploy
+  variables:
+  - template: 'ci/templates/stage-vars.yml'
+  jobs:
+  - template: 'ci/templates/job-variable-steps.yml'
+    parameters:
+      jobs:
+      - job: collectDists
+        condition: and(eq(variables['is_master_branch'], 'true'), eq(variables['tag_check.BUILD_IS_TAG'], 'true'))
+        pool:
+          vmImage: 'ubuntu-latest'
+        variables:
+          python.version: '3.7'
+        steps:
+        - checkout: none
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            targetPath: $(System.DefaultWorkingDirectory)/dist-temp
+        - task: CopyFiles@2
+          inputs:
+            sourceFolder: $(System.DefaultWorkingDirectory)/dist-temp
+            contents: '**'
+            targetFolder: $(System.DefaultWorkingDirectory)/dist
+            overWrite: true
+            flattenFolders: true
+        - script: rm dist/*-linux_*.whl
+          condition: eq(variables['manylinux.enabled'], 'true')
+          displayName: 'Remove platform wheels'
+        - publish: $(System.DefaultWorkingDirectory)/dist
+          artifact: $(all_dists.artifact_name)
+
+      - job: deploy
+        dependsOn: collectDists
+        condition: and(succeeded(), eq(variables['is_master_branch'], 'true'), eq(variables['tag_check.BUILD_IS_TAG'], 'true'))
+        variables:
+          python.version: '3.7'
+        steps:
+        - checkout: none
+        - task: DownloadPipelineArtifact@2
+          inputs:
+            artifact: $(all_dists.artifact_name)
+            targetPath: $(System.DefaultWorkingDirectory)/dist
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '$(python.version)'
+          displayName: 'Use Python $(python.version)'
+        - script: pip install twine
+          displayName: 'install twine'
+        - task: TwineAuthenticate@1
+          inputs:
+            artifactFeed: $(twineAuthArtifactFeed)
+            pythonUploadServiceConnection: $(twineAuthServiceConnection)
+        - script: python3.7 ci/fix_pypirc.py $(PYPIRC_PATH)
+          displayName: 'Fix pypirc'
+        - script: twine upload -r $(twineUploadRepo) --config-file $(PYPIRC_PATH) --skip-existing dist/*
+          displayName: 'twine upload'
