@@ -59,7 +59,7 @@ stages:
             echo 'Build.SourceBranch: "$(Build.SourceBranch)"'
             echo 'strat.mtrx: "$(strat.mtrx)"'
             false
-        - template: '$(System.DefaultWorkingDirectory)/ci/templates/build-steps.yml'
+        - template: 'build-steps.yml'
           parameters:
             use_cython: 'true'
             test_mode: 'develop'
@@ -120,7 +120,7 @@ stages:
         strategy:
           matrix: $(strat.mtrx)
         steps:
-        - template: '$(System.DefaultWorkingDirectory)/ci/templates/coverage-test.yml'
+        - template: 'coverage-test.yml'
 
       - job: submitCoveralls
         dependsOn: testCoverage
@@ -139,7 +139,7 @@ stages:
         strategy:
           matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
         steps:
-        - template: '$(System.DefaultWorkingDirectory)/ci/templates/build-steps.yml'
+        - template: 'build-steps.yml'
           parameters:
             test_mode: 'wheel'
 
@@ -150,7 +150,7 @@ stages:
         strategy:
           matrix: $[ dependencies.generator.outputs['strat.mtrx'] ]
         steps:
-        - template: '$(System.DefaultWorkingDirectory)/ci/templates/build-steps.yml'
+        - template: 'build-steps.yml'
           parameters:
             test_mode: 'sdist'
 
