@@ -66,7 +66,7 @@ stages:
 
       - job: buildManyLinux
         dependsOn: compile
-        condition: variables['manylinux.enabled']
+        condition: and(succeeded(), variables['manylinux.enabled'])
         pool:
           vmImage: 'ubuntu-16.04'
         strategy:
@@ -187,7 +187,7 @@ stages:
 
       - job: deploy
         dependsOn: collectDists
-        condition: and(variables['is_master_branch'], variables['tag_check.BUILD_IS_TAG'])
+        condition: and(succeeded(), variables['is_master_branch'], variables['tag_check.BUILD_IS_TAG'])
         variables:
           python.version: '3.7'
         steps:
