@@ -19,3 +19,8 @@ cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint
 cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct) nogil except -1
 cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bint use_cache=*) nogil except -1
 cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct) nogil except -1
+
+cdef Py_ssize_t _cfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=*) nogil except -1
+cdef Py_ssize_t _icfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=*) nogil except -1
+cdef Py_ssize_t _cfft_execute(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=*, bint use_cache=*) nogil except -1
+cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=*) nogil except -1

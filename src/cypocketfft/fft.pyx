@@ -101,6 +101,47 @@ cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[
             raise MemoryError()
     return length
 
+cdef Py_ssize_t _cfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+    return _cfft_execute(in_arr, out_arr, fct, True, use_cache)
+
+cdef Py_ssize_t _icfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+    return _cfft_execute(in_arr, out_arr, fct, False, use_cache)
+
+cdef Py_ssize_t _cfft_execute(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=True, bint use_cache=True) nogil except -1:
+    cdef Py_ssize_t length = in_arr.shape[0]
+    cdef cfft_plan plan
+    if use_cache:
+        plan = plan_cache.get_cplan(length)
+    else:
+        plan = plan_cache._build_cplan(length)
+    if plan is NULL:
+        with gil:
+            raise Exception()
+    cdef Py_ssize_t r = _cfft_with_plan(&plan, in_arr, out_arr, fct, is_forward)
+    if not use_cache and plan != NULL:
+        wrapper._destroy_cfft_plan(plan)
+    return r
+
+cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=True) nogil except -1:
+    cdef Py_ssize_t length = in_arr.shape[0]
+    if out_arr.shape[0] != length:
+        with gil:
+            raise Exception('out_arr shape mismatch. size={}, expected={}'.format(
+                out_arr.shape[0], length,
+            ))
+    cdef void *in_ptr = &in_arr[0]
+    cdef void *out_ptr = &out_arr[0]
+    memcpy(out_ptr, in_ptr, length * sizeof(COMPLEX_ft))
+    cdef double *out_ptr_dbl = <double *>out_ptr
+    if is_forward:
+        r = wrapper._cfft_forward(plan[0], out_ptr_dbl, fct)
+    else:
+        r = wrapper._cfft_backward(plan[0], out_ptr_dbl, fct)
+    if r != 0:
+        with gil:
+            raise MemoryError()
+    return r
+
 
 def rfft(REAL_ft[:] in_arr, fct=None):
     if fct is None:
@@ -120,3 +161,21 @@ def irfft(COMPLEX_ft[:] in_arr, fct=None):
     cdef double[:] out_arr = np.empty(out_size, dtype=np.float64)
     _irfft(in_arr, out_arr, _fct)
     return out_arr
+
+def fft(COMPLEX_ft[:] in_arr, fct=None):
+    if fct is None:
+        fct = 1.0
+    cdef double _fct = fct
+    cdef Py_ssize_t length = in_arr.shape[0]
+    cdef double complex[:] out_arr = np.empty(length, dtype=np.complex128)
+    _cfft(in_arr, out_arr, _fct)
+    return np.asarray(out_arr)
+
+def ifft(COMPLEX_ft[:] in_arr, fct=None):
+    cdef Py_ssize_t length = in_arr.shape[0]
+    if fct is None:
+        fct = <double>(1 / <double>length)
+    cdef double _fct = fct
+    cdef double complex[:] out_arr = np.empty(length, dtype=np.complex128)
+    _icfft(in_arr, out_arr, _fct, False)
+    return np.asarray(out_arr)
