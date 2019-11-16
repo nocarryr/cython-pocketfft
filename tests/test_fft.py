@@ -58,7 +58,9 @@ def test_rfft_cdef(fft_length, use_omp):
     cy_dur, np_dur = _testfft.test_rfft(sig, use_omp=use_omp, chunksize=4)
     if cy_dur > np_dur:
         diff = (cy_dur - np_dur) * 1000
-        print(f'!!! cy > np: fft_length={fft_length}, use_omp={use_omp}, diff={diff} ms')
+        print('!!! cy > np: fft_length={}, use_omp={}, diff={} ms'.format(
+            fft_length, use_omp, diff,
+        ))
     if fft_length > 1024:
         assert cy_dur < np_dur
 
