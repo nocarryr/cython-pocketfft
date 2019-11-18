@@ -4,6 +4,7 @@ import shlex
 import yaml
 
 IS_PR = os.environ.get('IS_PR_BUILD')
+PR_SOURCE_COMMIT = os.environ.get('PR_SOURCE_COMMIT')
 
 def run_command(cmd_str):
     result = subprocess.check_output(shlex.split(cmd_str))
@@ -31,7 +32,7 @@ def get_git_info():
     if not IS_PR:
         return {}
     merge_commit = '-1'
-    merge_parent = '-1 --no-merges'
+    merge_parent = '-1 {}'.format(PR_SOURCE_COMMIT)
     branch = os.environ['GIT_BRANCH']
     head = {
         'id': gitlog('%H', merge_commit),
