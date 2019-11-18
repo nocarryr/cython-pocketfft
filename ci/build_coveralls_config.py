@@ -18,11 +18,9 @@ def gitlog(fmt, commit='-1'):
     return run_command(cmd_str)
 
 def get_env_vars():
-    keys = ['service_name', 'service_number']
+    keys = ['service_name', 'service_number', 'service_job_id']
     if IS_PR:
         keys.append('service_pull_request')
-    else:
-        keys.append('service_job_id')
     envkeys = {key:'_'.join(['COVERALLS', key.upper()]) for key in keys}
     conf = {key:os.environ[envkey] for key, envkey in envkeys.items()}
     conf['parallel'] = True
