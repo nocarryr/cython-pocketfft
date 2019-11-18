@@ -1,6 +1,13 @@
 
 trigger:
-- "*"
+  batch: false
+  branches:
+    include:
+    - "*"
+pr:
+  branches:
+    include:
+    - master
 
 variables:
   project_name: 'cython-pocketfft'
@@ -57,6 +64,8 @@ stages:
             echo 'manylinux.enabled: "$(manylinux.enabled)"'
             echo 'BUILD_IS_TAG: "$(BUILD_IS_TAG)"'
             echo 'Build.SourceBranch: "$(Build.SourceBranch)"'
+            echo 'is_pr_build: "$(is_pr_build)"'
+            echo 'pr.number: "$(pr.number)"'
             echo 'strat.mtrx: "$(strat.mtrx)"'
         - template: 'build-steps.yml'
           parameters:
@@ -113,7 +122,8 @@ stages:
       - job: testCoverage
         variables:
           coveralls.service_job_id: $(System.JobId)
-          # TODO: coveralls.service_pull_request:
+          coveralls.service_pull_request: $(pr.number)
+          coveralls.service_job_number: $(System.JobId)
         pool:
           vmImage: $(imageName)
         strategy:
