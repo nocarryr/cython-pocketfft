@@ -123,6 +123,7 @@ stages:
         variables:
           coveralls.service_job_id: $(System.JobId)
           coveralls.service_pull_request: $(pr.number)
+          coveralls.service_job_number: $(System.JobId)
         pool:
           vmImage: $(imageName)
         strategy:
