@@ -12,4 +12,5 @@ variables:
   ${{ if and(startsWith(variables['Build.SourceBranch'], 'refs/pull/'), eq(variables['Build.Reason'], 'PullRequest')) }}:
     is_pr_build: true
     pr.number: $(System.PullRequest.PullRequestNumber)
+    pr.source_commit: $(System.PullRequest.SourceCommitId)
   ${{ insert }}: ${{ parameters.extraVars }}

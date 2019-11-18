@@ -4,6 +4,7 @@ import shlex
 import yaml
 
 IS_PR = os.environ.get('IS_PR_BUILD')
+PR_SOURCE_COMMIT = os.environ.get('PR_SOURCE_COMMIT')
 
 def run_command(cmd_str):
     result = subprocess.check_output(shlex.split(cmd_str))
@@ -31,15 +32,14 @@ def get_git_info():
     if not IS_PR:
         return {}
     merge_commit = '-1'
-    merge_parent = '-1 --no-merges'
     branch = os.environ['GIT_BRANCH']
     head = {
         'id': gitlog('%H', merge_commit),
-        'author_name': gitlog('%aN', merge_parent),
-        'author_email': gitlog('%ae', merge_parent),
+        'author_name': gitlog('%aN', PR_SOURCE_COMMIT),
+        'author_email': gitlog('%ae', PR_SOURCE_COMMIT),
         'committer_name': gitlog('%cN', merge_commit),
         'committer_email': gitlog('%ce', merge_commit),
-        'message': gitlog('%s', merge_parent),
+        'message': gitlog('%s', PR_SOURCE_COMMIT),
     }
     remotes = [{'name': line.split()[0], 'url': line.split()[1]}
                for line in run_command('git remote -v').splitlines()
