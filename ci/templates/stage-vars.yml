@@ -5,7 +5,6 @@ variables:
   ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
     is_master_branch: true
     manylinux.enabled: true
-    is_pr_build: false
   ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/master') }}:
     is_master_branch: false
     manylinux.enabled: false
