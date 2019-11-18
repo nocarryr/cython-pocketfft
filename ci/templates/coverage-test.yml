@@ -47,7 +47,7 @@ steps:
         else:
             keys.append('service_job_id')
         envkeys = {key:'_'.join(['COVERALLS', key.upper()]) for key in keys}
-        conf = {key:os.environ[envkey] for key, envkey in keys.items()}
+        conf = {key:os.environ[envkey] for key, envkey in envkeys.items()}
         conf['parallel'] = True
         print('coveralls config: {}'.format(conf))
         with open('.coveralls.yml', 'w') as f:
