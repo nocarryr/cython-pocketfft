@@ -3,7 +3,7 @@ import subprocess
 import shlex
 import yaml
 
-IS_PR = os.environ.get('IS_PR_BUILD')
+IS_PR = str(os.environ.get('IS_PR_BUILD')).lower() == 'true'
 PR_SOURCE_COMMIT = os.environ.get('PR_SOURCE_COMMIT')
 
 def run_command(cmd_str):

@@ -5,7 +5,6 @@ variables:
   ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/master') }}:
     is_master_branch: true
     manylinux.enabled: true
-    is_pr_build: false
   ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/master') }}:
     is_master_branch: false
     manylinux.enabled: false
@@ -13,4 +12,6 @@ variables:
     is_pr_build: true
     pr.number: $(System.PullRequest.PullRequestNumber)
     pr.source_commit: $(System.PullRequest.SourceCommitId)
+  ${{ if not(and(startsWith(variables['Build.SourceBranch'], 'refs/pull/'), eq(variables['Build.Reason'], 'PullRequest'))) }}:
+    is_pr_build: false
   ${{ insert }}: ${{ parameters.extraVars }}
