@@ -92,13 +92,67 @@ def test_numpy(Py_ssize_t N=32, Py_ssize_t reps=1, object pr=None):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def test(Py_ssize_t N=32, Py_ssize_t reps=1, bint return_result=False, bint use_omp=False):
-    t = np.linspace(0., 1., N)
-    fc = 6000.
-    cdef double[:] x = np.sin(2*np.pi*fc*t)
-    cdef double[:] x_view = x
-    cdef Py_ssize_t ff_length = fft._rfft_length(x_view)
-    cdef double complex[:,:] ff_view = np.empty((reps, ff_length), dtype=np.complex128)
+def test_rfft(double[:,:] sig, bint use_omp=False, Py_ssize_t chunksize=1):
+    cdef Py_ssize_t nreps = sig.shape[0], in_length = sig.shape[1]
+    cdef Py_ssize_t ff_length = fft._rfft_length(sig[0])
+    cdef double complex[:,:] ff_view = np.empty((nreps, ff_length), dtype=np.complex128)
+    cdef double[:,:] iff_view = np.empty((nreps, in_length), dtype=np.float64)
+    cdef double i_fct = 1.0 / <double>in_length
+
+    cdef Py_ssize_t i
+    cdef double start_ts, end_ts
+
+    if use_omp:
+        with nogil:
+            start_ts = get_time()
+            for i in prange(nreps):
+                fft._rfft(sig[i,:], ff_view[i,:], 1.0)
+                fft._irfft(ff_view[i,:], iff_view[i,:], i_fct)
+    else:
+        start_ts = get_time()
+        with nogil:
+            for i in range(nreps):
+                fft._rfft(sig[i], ff_view[i], 1.0)
+                fft._irfft(ff_view[i], iff_view[i], i_fct)
+
+    end_ts = get_time()
+    cy_dur = end_ts - start_ts
+    print('')
+    print('length={}, use_omp={}'.format(in_length, use_omp))
+    print('cython duration={}'.format(cy_dur))
+
+    cdef double complex[:,:] npff_view = np.empty((nreps, ff_length), dtype=np.complex128)
+    cdef double complex[:] npff = np.empty(ff_length, dtype=np.complex128)
+    cdef double[:,:] npiff_view = np.empty((nreps, in_length), dtype=np.float64)
+    cdef double[:] npiff = np.empty(in_length, dtype=np.float64)
+    cdef double np_start_ts, np_end_ts
+
+    np_start_ts = get_time()
+    for i in range(nreps):
+        npff = np.fft.rfft(sig[i])
+        npff_view[i,:] = npff
+        npiff = np.fft.irfft(npff_view[i])
+        npiff_view[i,:] = npiff
+
+    np_end_ts = get_time()
+
+    np_dur = np_end_ts - np_start_ts
+    print('numpy duration={}'.format(np_dur))
+
+    assert np.allclose(ff_view, npff_view)
+    assert np.allclose(iff_view, npiff_view)
+    return cy_dur, np_dur
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def test_cfft(Py_ssize_t nfft=32, Py_ssize_t reps=1, bint use_omp=False):
+    cdef Py_ssize_t N = nfft * reps
+    cdef double i_fct = 1.0 / <double>nfft
+
+    _sig = np.random.uniform(-1, 1, N) + 1j*np.random.uniform(-1, 1, N)
+    cdef double complex[:,:] sig = np.reshape(_sig, (reps, nfft))
+    cdef double complex[:,:] ff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef double complex[:,:] iff_view = np.empty((reps, nfft), dtype=np.complex128)
 
     cdef Py_ssize_t i
     cdef double start_ts, end_ts
@@ -107,26 +161,32 @@ def test(Py_ssize_t N=32, Py_ssize_t reps=1, bint return_result=False, bint use_
         start_ts = get_time()
         with nogil:
             for i in prange(reps):
-                fft._rfft(x_view, ff_view[i,:], 1.0)
+                fft._cfft(sig[i], ff_view[i,:], 1.0)
+                fft._icfft(ff_view[i], iff_view[i], i_fct)
     else:
         start_ts = get_time()
         with nogil:
             for i in range(reps):
-                fft._rfft(x_view, ff_view[i,:], 1.0)
+                fft._cfft(sig[i], ff_view[i,:], 1.0)
+                fft._icfft(ff_view[i], iff_view[i], i_fct)
 
     end_ts = get_time()
     dur = end_ts - start_ts
     percall = dur / <double>reps
     print('cython duration={}, percall={}'.format(dur, percall))
 
-    cdef double complex[:,:] npff_view = np.empty((reps, ff_length), dtype=np.complex128)
+    cdef double complex[:,:] npff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef double complex[:,:] npiff_view = np.empty((reps, nfft), dtype=np.complex128)
     cdef double complex[:] npff
+    cdef double complex[:] npiff
     cdef double np_start_ts, np_end_ts
 
     np_start_ts = get_time()
     for i in range(reps):
-        npff = np.fft.rfft(x)
+        npff = np.fft.fft(sig[i])
         npff_view[i,:] = npff
+        npiff = np.fft.ifft(npff)
+        npiff_view[i,:] = npiff
     np_end_ts = get_time()
 
     np_dur = np_end_ts - np_start_ts
@@ -134,11 +194,5 @@ def test(Py_ssize_t N=32, Py_ssize_t reps=1, bint return_result=False, bint use_
     print('numpy duration={}, percall={}'.format(np_dur, np_percall))
 
     assert np.allclose(ff_view, npff_view)
-
-    cdef double[:] iff = fft.irfft(ff_view[0,:])
-    cdef double[:] npiff = np.fft.irfft(ff_view[0,:])
-    assert np.allclose(iff, npiff)
-    assert np.allclose(iff, x)
-
-    if return_result:
-        return np.asarray(x), np.asarray(ff_view[0]), np.asarray(iff)
+    assert np.allclose(iff_view, npiff_view)
+    assert np.allclose(sig, iff_view)
