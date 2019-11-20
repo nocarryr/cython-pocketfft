@@ -50,5 +50,5 @@ steps:
   condition: succeededOrFailed()
   inputs:
     testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Test results for Python$(python.version)-$(platform)'
+    testRunTitle: 'Dist test results for Python$(python.version)-$(platform)'
     mergeTestResults: true

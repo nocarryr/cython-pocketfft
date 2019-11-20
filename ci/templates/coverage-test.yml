@@ -23,7 +23,7 @@ steps:
   condition: succeededOrFailed()
   inputs:
     testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
+    testRunTitle: 'Coverage test results for Python$(python.version)-$(platform)'
 
 - task: PublishCodeCoverageResults@1
   inputs:
