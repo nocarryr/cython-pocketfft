@@ -1,7 +1,3 @@
-parameters:
-  python.version: ''
-  use_cython: 'false'
-  test_mode: ''
 
 steps:
 - task: UsePythonVersion@0
@@ -12,57 +8,47 @@ steps:
 - script: python -m pip install -U pip setuptools wheel && pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- ${{ if eq(parameters.use_cython, 'true') }}:
-  - script: python setup.py build_ext --inplace --use-cython
-    displayName: 'Build Extenstions'
+- task: DownloadPipelineArtifact@2
+  inputs:
+    targetPath: $(System.DefaultWorkingDirectory)/dist-temp
 
-  - script: python setup.py sdist bdist_wheel
-    displayName: 'Build dist'
+- task: CopyFiles@2
+  inputs:
+    sourceFolder: $(System.DefaultWorkingDirectory)/dist-temp
+    contents: '**'
+    targetFolder: $(System.DefaultWorkingDirectory)/dist
+    overWrite: true
+    flattenFolders: true
 
-  - publish: $(System.DefaultWorkingDirectory)/dist
-    artifact: $(artifact_name)
+- ${{ if and(eq(variables.platform, 'linux'), eq(variables['manylinux.enabled'], 'true')) }}:
+  - script: rm dist/*-linux_*.whl
+    displayName: 'Remove platform wheels'
 
-- ${{ if and(eq(parameters.use_cython, 'false'), ne(parameters.test_mode, 'wheel')) }}:
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      artifact: $(artifact_name)
-      targetPath: $(System.DefaultWorkingDirectory)/dist
-
-- ${{ if eq(parameters.test_mode, 'develop') }}:
-  - script: pip install -e .
-    displayName: 'Install develop mode'
-
-- ${{ if eq(parameters.test_mode, 'wheel') }}:
-  - task: DownloadPipelineArtifact@2
-    inputs:
-      targetPath: $(System.DefaultWorkingDirectory)/dist-temp
-  - task: CopyFiles@2
-    inputs:
-      sourceFolder: $(System.DefaultWorkingDirectory)/dist-temp
-      contents: '**'
-      targetFolder: $(System.DefaultWorkingDirectory)/dist
-      overWrite: true
-      flattenFolders: true
-
-  - ${{ if and(eq(variables.platform, 'linux'), eq(variables['manylinux.enabled'], 'true')) }}:
-    - script: rm dist/*-linux_*.whl
-      displayName: 'Remove platform wheels'
-
-  - script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
-    displayName: 'Install wheel'
-
-- ${{ if eq(parameters.test_mode, 'sdist') }}:
-  - script: pip install --no-binary $(project_name) --no-index --find-links dist/ $(project_name)
-    displayName: 'Install sdist'
+- script: pip install --only-binary $(project_name) --no-index --find-links dist/ $(project_name)
+  displayName: 'Install wheel'
 
 - script: python build_tests.py
   displayName: 'Build Tests'
 
-- script: py.test --junitxml=junit/test-results.xml
-  displayName: 'Run Tests'
+- script: py.test --junitxml=junit/test-results-wheel.xml
+  displayName: 'Run wheel tests'
+
+- script: pip uninstall -y $(project_name)
+  displayName: 'Uninstall $(project_name)'
+  condition: succeededOrFailed()
+
+- script: pip install --no-binary $(project_name) --no-index --find-links dist/ $(project_name)
+  displayName: 'Install sdist'
+
+- script: python build_tests.py
+  displayName: 'Build Tests'
+
+- script: py.test --junitxml=junit/test-results-sdist.xml
+  displayName: 'Run sdist tests'
 
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   inputs:
     testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python$(python.version)-$(platform)'
+    testRunTitle: 'Test results for Python$(python.version)-$(platform)'
+    mergeTestResults: true

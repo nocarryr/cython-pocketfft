@@ -67,10 +67,7 @@ stages:
             echo 'is_pr_build: "$(is_pr_build)"'
             echo 'pr.number: "$(pr.number)"'
             echo 'strat.mtrx: "$(strat.mtrx)"'
-        - template: 'build-steps.yml'
-          parameters:
-            use_cython: 'true'
-            test_mode: 'develop'
+        - template: 'compile-steps.yml'
 
       - job: buildManyLinux
         dependsOn: compile
@@ -141,7 +138,7 @@ stages:
             COVERALLS_REPO_TOKEN: $(coveralls.repo_token)
             COVERALLS_SERVICE_NUMBER: $(coveralls.service_number)
 
-      - job: testFromWheel
+      - job: testFromDist
         dependsOn: testCoverage
         pool:
           vmImage: $(imageName)
@@ -149,19 +146,6 @@ stages:
           matrix: $[ variables['strat.mtrx'] ]
         steps:
         - template: 'build-steps.yml'
-          parameters:
-            test_mode: 'wheel'
-
-      - job: testFromSDist
-        dependsOn: testCoverage
-        pool:
-          vmImage: $(imageName)
-        strategy:
-          matrix: $[ variables['strat.mtrx'] ]
-        steps:
-        - template: 'build-steps.yml'
-          parameters:
-            test_mode: 'sdist'
 
 - stage: deploy
   variables:
