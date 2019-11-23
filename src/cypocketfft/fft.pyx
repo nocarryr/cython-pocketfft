@@ -12,25 +12,25 @@ from cypocketfft.plancache cimport plan_cache
 
 import numpy as np
 
-cdef size_t _rfft_length(REAL_ft[:] in_arr) nogil except -1:
+cdef size_t _rfft_length(double[:] in_arr) nogil except -1:
     cdef size_t in_size = in_arr.shape[0]
     cdef size_t length = in_size // 2 + 1
     return length
 
-def rfft_length(REAL_ft[:] in_arr):
+def rfft_length(double[:] in_arr):
     return _rfft_length(in_arr)
 
 
-cdef size_t _irfft_length(COMPLEX_ft[:] in_arr) nogil except -1:
+cdef size_t _irfft_length(complex_t[:] in_arr) nogil except -1:
     cdef size_t in_size = in_arr.shape[0]
     cdef size_t length = (in_size-1) * 2
     return length
 
-def irfft_length(COMPLEX_ft[:] in_arr):
+def irfft_length(complex_t[:] in_arr):
     return _irfft_length(in_arr)
 
 
-cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+cdef Py_ssize_t _rfft(double[:] in_arr, complex_t[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
     cdef rfft_plan plan
     if use_cache:
@@ -42,7 +42,7 @@ cdef Py_ssize_t _rfft(REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint
         wrapper._destroy_rfft_plan(plan)
     return r
 
-cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct) nogil except -1:
+cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, double[:] in_arr, complex_t[:] out_arr, double fct) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
     cdef Py_ssize_t out_size = _rfft_length(in_arr)
     if out_arr.shape[0] < out_size:
@@ -67,7 +67,7 @@ cdef Py_ssize_t _rfft_with_plan(rfft_plan* plan, REAL_ft[:] in_arr, COMPLEX_ft[:
             raise MemoryError()
     return out_size
 
-cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+cdef Py_ssize_t _irfft(complex_t[:] in_arr, double[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
     cdef Py_ssize_t length = _irfft_length(in_arr)
     cdef rfft_plan plan
@@ -80,7 +80,7 @@ cdef Py_ssize_t _irfft(COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct, bin
         wrapper._destroy_rfft_plan(plan)
     return r
 
-cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[:] out_arr, double fct) nogil except -1:
+cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, complex_t[:] in_arr, double[:] out_arr, double fct) nogil except -1:
     cdef Py_ssize_t in_size = in_arr.shape[0]
     cdef Py_ssize_t length = _irfft_length(in_arr)
     if out_arr.shape[0] < length:
@@ -101,13 +101,13 @@ cdef Py_ssize_t _irfft_with_plan(rfft_plan* plan, COMPLEX_ft[:] in_arr, REAL_ft[
             raise MemoryError()
     return length
 
-cdef Py_ssize_t _cfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+cdef Py_ssize_t _cfft(complex_t[:] in_arr, complex_t[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     return _cfft_execute(in_arr, out_arr, fct, True, use_cache)
 
-cdef Py_ssize_t _icfft(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint use_cache=True) nogil except -1:
+cdef Py_ssize_t _icfft(complex_t[:] in_arr, complex_t[:] out_arr, double fct, bint use_cache=True) nogil except -1:
     return _cfft_execute(in_arr, out_arr, fct, False, use_cache)
 
-cdef Py_ssize_t _cfft_execute(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=True, bint use_cache=True) nogil except -1:
+cdef Py_ssize_t _cfft_execute(complex_t[:] in_arr, complex_t[:] out_arr, double fct, bint is_forward=True, bint use_cache=True) nogil except -1:
     cdef Py_ssize_t length = in_arr.shape[0]
     cdef cfft_plan plan
     if use_cache:
@@ -122,7 +122,7 @@ cdef Py_ssize_t _cfft_execute(COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, doubl
         wrapper._destroy_cfft_plan(plan)
     return r
 
-cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, COMPLEX_ft[:] in_arr, COMPLEX_ft[:] out_arr, double fct, bint is_forward=True) nogil except -1:
+cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, complex_t[:] in_arr, complex_t[:] out_arr, double fct, bint is_forward=True) nogil except -1:
     cdef Py_ssize_t length = in_arr.shape[0]
     if out_arr.shape[0] != length:
         with gil:
@@ -131,7 +131,7 @@ cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, COMPLEX_ft[:] in_arr, COMPLEX_f
             ))
     cdef void *in_ptr = &in_arr[0]
     cdef void *out_ptr = &out_arr[0]
-    memcpy(out_ptr, in_ptr, length * sizeof(COMPLEX_ft))
+    memcpy(out_ptr, in_ptr, length * sizeof(complex_t))
     cdef double *out_ptr_dbl = <double *>out_ptr
     if is_forward:
         r = wrapper._cfft_forward(plan[0], out_ptr_dbl, fct)
@@ -143,17 +143,17 @@ cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, COMPLEX_ft[:] in_arr, COMPLEX_f
     return r
 
 
-def rfft(REAL_ft[:] in_arr, fct=None):
+def rfft(double[:] in_arr, fct=None):
     if fct is None:
         fct = 1.0
     cdef double _fct = fct
     out_size = _rfft_length(in_arr)
-    cdef double complex[:] out_arr = np.empty(out_size, dtype=np.complex128)
+    cdef complex_t[:] out_arr = np.empty(out_size, dtype=np.complex128)
     _rfft(in_arr, out_arr, _fct)
     assert out_size == out_arr.size
     return out_arr
 
-def irfft(COMPLEX_ft[:] in_arr, fct=None):
+def irfft(complex_t[:] in_arr, fct=None):
     out_size = _irfft_length(in_arr)
     if fct is None:
         fct = <double>(1 / <double>out_size)
@@ -162,20 +162,20 @@ def irfft(COMPLEX_ft[:] in_arr, fct=None):
     _irfft(in_arr, out_arr, _fct)
     return out_arr
 
-def fft(COMPLEX_ft[:] in_arr, fct=None):
+def fft(complex_t[:] in_arr, fct=None):
     if fct is None:
         fct = 1.0
     cdef double _fct = fct
     cdef Py_ssize_t length = in_arr.shape[0]
-    cdef double complex[:] out_arr = np.empty(length, dtype=np.complex128)
+    cdef complex_t[:] out_arr = np.empty(length, dtype=np.complex128)
     _cfft(in_arr, out_arr, _fct)
     return np.asarray(out_arr)
 
-def ifft(COMPLEX_ft[:] in_arr, fct=None):
+def ifft(complex_t[:] in_arr, fct=None):
     cdef Py_ssize_t length = in_arr.shape[0]
     if fct is None:
         fct = <double>(1 / <double>length)
     cdef double _fct = fct
-    cdef double complex[:] out_arr = np.empty(length, dtype=np.complex128)
+    cdef complex_t[:] out_arr = np.empty(length, dtype=np.complex128)
     _icfft(in_arr, out_arr, _fct, False)
     return np.asarray(out_arr)

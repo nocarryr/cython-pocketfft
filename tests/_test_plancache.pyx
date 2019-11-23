@@ -11,7 +11,6 @@ from libc.stdint cimport uintptr_t
 
 from cypocketfft.wrapper cimport *
 from cypocketfft cimport fft
-from cypocketfft.fft cimport COMPLEX_ft
 from cypocketfft.plancache cimport PlanCache
 
 import numpy as np

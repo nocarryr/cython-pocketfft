@@ -13,7 +13,7 @@ import pstats
 from cypocketfft.wrapper cimport *
 from cypocketfft import fft
 from cypocketfft cimport fft
-from cypocketfft.fft cimport REAL_ft, COMPLEX_ft
+from cypocketfft.fft cimport complex_t
 
 cdef double get_time() nogil except *:
     cdef double result
@@ -27,7 +27,7 @@ cdef double get_time() nogil except *:
         result += <double>t.tv_nsec / <double>1000000000
     return result
 
-cdef void _handle_rfft(double[:] time_domain, COMPLEX_ft[:] freq_domain, double fct, bint is_forward) nogil except *:
+cdef void _handle_rfft(double[:] time_domain, complex_t[:] freq_domain, double fct, bint is_forward) nogil except *:
     if is_forward:
         fft._rfft(time_domain, freq_domain, fct)
     else:
@@ -41,8 +41,8 @@ def test_native(Py_ssize_t N=32, Py_ssize_t reps=1, object pr=None):
     x = np.sin(2*np.pi*fc*t)
     cdef double[:] x_view = x
     ff_length = fft._rfft_length(x_view)
-    cdef double complex[:] ff = np.empty(ff_length, dtype=np.complex128)
-    cdef double complex[:,:] ff_view = np.empty((reps, ff_length), dtype=np.complex128)
+    cdef complex_t[:] ff = np.empty(ff_length, dtype=np.complex128)
+    cdef complex_t[:,:] ff_view = np.empty((reps, ff_length), dtype=np.complex128)
     cdef double[:] iff = np.empty(N, dtype=np.float64)
     cdef double[:,:] iff_view = np.empty((reps, N), dtype=np.float64)
     cdef Py_ssize_t i
@@ -70,8 +70,8 @@ def test_numpy(Py_ssize_t N=32, Py_ssize_t reps=1, object pr=None):
     x = np.sin(2*np.pi*fc*t)
     cdef double[:] x_view = x
     ff_length = fft._rfft_length(x_view)
-    cdef double complex[:,:] npff_view = np.empty((reps, ff_length), dtype=np.complex128)
-    cdef double complex[:] npff
+    cdef complex_t[:,:] npff_view = np.empty((reps, ff_length), dtype=np.complex128)
+    cdef complex_t[:] npff
     cdef double[:,:] npiff_view = np.empty((reps, N), dtype=np.float64)
     cdef double[:] npiff = np.empty(N, dtype=np.float64)
     cdef Py_ssize_t i
@@ -95,7 +95,7 @@ def test_numpy(Py_ssize_t N=32, Py_ssize_t reps=1, object pr=None):
 def test_rfft(double[:,:] sig, bint use_omp=False, Py_ssize_t chunksize=1):
     cdef Py_ssize_t nreps = sig.shape[0], in_length = sig.shape[1]
     cdef Py_ssize_t ff_length = fft._rfft_length(sig[0])
-    cdef double complex[:,:] ff_view = np.empty((nreps, ff_length), dtype=np.complex128)
+    cdef complex_t[:,:] ff_view = np.empty((nreps, ff_length), dtype=np.complex128)
     cdef double[:,:] iff_view = np.empty((nreps, in_length), dtype=np.float64)
     cdef double i_fct = 1.0 / <double>in_length
 
@@ -121,8 +121,8 @@ def test_rfft(double[:,:] sig, bint use_omp=False, Py_ssize_t chunksize=1):
     print('length={}, use_omp={}'.format(in_length, use_omp))
     print('cython duration={}'.format(cy_dur))
 
-    cdef double complex[:,:] npff_view = np.empty((nreps, ff_length), dtype=np.complex128)
-    cdef double complex[:] npff = np.empty(ff_length, dtype=np.complex128)
+    cdef complex_t[:,:] npff_view = np.empty((nreps, ff_length), dtype=np.complex128)
+    cdef complex_t[:] npff = np.empty(ff_length, dtype=np.complex128)
     cdef double[:,:] npiff_view = np.empty((nreps, in_length), dtype=np.float64)
     cdef double[:] npiff = np.empty(in_length, dtype=np.float64)
     cdef double np_start_ts, np_end_ts
@@ -150,9 +150,9 @@ def test_cfft(Py_ssize_t nfft=32, Py_ssize_t reps=1, bint use_omp=False):
     cdef double i_fct = 1.0 / <double>nfft
 
     _sig = np.random.uniform(-1, 1, N) + 1j*np.random.uniform(-1, 1, N)
-    cdef double complex[:,:] sig = np.reshape(_sig, (reps, nfft))
-    cdef double complex[:,:] ff_view = np.empty((reps, nfft), dtype=np.complex128)
-    cdef double complex[:,:] iff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef complex_t[:,:] sig = np.reshape(_sig, (reps, nfft))
+    cdef complex_t[:,:] ff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef complex_t[:,:] iff_view = np.empty((reps, nfft), dtype=np.complex128)
 
     cdef Py_ssize_t i
     cdef double start_ts, end_ts
@@ -175,10 +175,10 @@ def test_cfft(Py_ssize_t nfft=32, Py_ssize_t reps=1, bint use_omp=False):
     percall = dur / <double>reps
     print('cython duration={}, percall={}'.format(dur, percall))
 
-    cdef double complex[:,:] npff_view = np.empty((reps, nfft), dtype=np.complex128)
-    cdef double complex[:,:] npiff_view = np.empty((reps, nfft), dtype=np.complex128)
-    cdef double complex[:] npff
-    cdef double complex[:] npiff
+    cdef complex_t[:,:] npff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef complex_t[:,:] npiff_view = np.empty((reps, nfft), dtype=np.complex128)
+    cdef complex_t[:] npff
+    cdef complex_t[:] npiff
     cdef double np_start_ts, np_end_ts
 
     np_start_ts = get_time()
