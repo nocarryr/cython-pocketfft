@@ -18,6 +18,10 @@ cdef size_t _rfft_length(double[:] in_arr) nogil except -1:
     return length
 
 def rfft_length(double[:] in_arr):
+    """Calculate the rfft result length for the input array
+
+    This evaluates to ``len(in_arr) // 2 + 1``
+    """
     return _rfft_length(in_arr)
 
 
@@ -27,6 +31,10 @@ cdef size_t _irfft_length(complex_t[:] in_arr) nogil except -1:
     return length
 
 def irfft_length(complex_t[:] in_arr):
+    """Calculate the irfft result length for the input array
+
+    This evaluates to ``(len(in_arr)-1) * 2``
+    """
     return _irfft_length(in_arr)
 
 
@@ -144,6 +152,16 @@ cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, complex_t[:] in_arr, complex_t[
 
 
 def rfft(double[:] in_arr, fct=None):
+    """Perform the rfft
+
+    Arguments:
+        in_arr: Input array or typed-memoryview (real-valued)
+        fct: Scaling factor to apply to the un-normalized transform (typically ``1.0``)
+
+    Returns:
+        The ifft result as a typed-memoryview of ``complex_t``
+
+    """
     if fct is None:
         fct = 1.0
     cdef double _fct = fct
@@ -154,6 +172,16 @@ def rfft(double[:] in_arr, fct=None):
     return out_arr
 
 def irfft(complex_t[:] in_arr, fct=None):
+    """Perform the inverse rfft
+
+    Arguments:
+        in_arr: Input array or typed-memoryview (complex-valued)
+        fct: Scaling factor to apply to the un-normalized transform (typically ``1.0 / len(in_arr)``)
+
+    Returns:
+        The ifft result as a typed-memoryview of ``double``
+
+    """
     out_size = _irfft_length(in_arr)
     if fct is None:
         fct = <double>(1 / <double>out_size)

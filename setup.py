@@ -145,6 +145,7 @@ if USE_CYTHON:
         compiler_directives={
             'embedsignature':True,
             'linetrace':CYTHON_TRACE,
+            'annotation_typing':False,
         },
     )
 else:

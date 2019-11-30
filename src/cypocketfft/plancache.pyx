@@ -22,6 +22,8 @@ cdef void cfft_plan_map_destroy(CFFT_PLAN_MAP_t plans) except *:
             wrapper._destroy_cfft_plan(plan)
 
 cdef class PlanCache:
+    """Storage for fft plans
+    """
     def __dealloc__(self):
         rfft_plan_map_destroy(self.rfft_plans)
         cfft_plan_map_destroy(self.cfft_plans)
