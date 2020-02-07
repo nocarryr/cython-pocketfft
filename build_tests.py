@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+import sys
 from pathlib import Path
 import subprocess
 import shlex
@@ -19,7 +20,7 @@ class ChDir(object):
 TEST_DIR = Path(__file__).resolve().parent / 'tests'
 
 def run():
-    cmd_str = 'python setup.py build_ext --inplace'
+    cmd_str = '{} setup.py build_ext --inplace'.format(sys.executable)
     print(cmd_str)
     with ChDir(TEST_DIR):
         assert Path.cwd() == TEST_DIR
