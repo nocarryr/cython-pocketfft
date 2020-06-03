@@ -10,10 +10,7 @@ Welcome to cython-pocketfft's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   wrapper
-   fft
-   plancache
-   types
+   reference/index
 
 
 
