@@ -20,7 +20,7 @@ cdef size_t _rfft_length(double[:] in_arr) nogil except -1:
 def rfft_length(double[:] in_arr):
     """Calculate the rfft result length for the input array
 
-    This evaluates to ``len(in_arr) // 2 + 1``
+    This evaluates to :math:`N / 2 + 1`
     """
     return _rfft_length(in_arr)
 
@@ -33,7 +33,7 @@ cdef size_t _irfft_length(complex_t[:] in_arr) nogil except -1:
 def irfft_length(complex_t[:] in_arr):
     """Calculate the irfft result length for the input array
 
-    This evaluates to ``(len(in_arr)-1) * 2``
+    This evaluates to :math:`(N - 1) * 2`
     """
     return _irfft_length(in_arr)
 
@@ -176,7 +176,7 @@ def irfft(complex_t[:] in_arr, fct=None):
 
     Arguments:
         in_arr: Input array or typed-memoryview (complex-valued)
-        fct: Scaling factor to apply to the un-normalized transform (typically ``1.0 / len(in_arr)``)
+        fct: Scaling factor to apply to the un-normalized transform (typically :math:`1.0 / N`)
 
     Returns:
         The ifft result as a typed-memoryview of ``double``
