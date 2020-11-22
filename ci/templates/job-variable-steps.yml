@@ -20,7 +20,7 @@ jobs:
             'mac':'macOS-latest',
             'windows':'windows-latest',
         }
-        PY_VERSIONS = ['3.5', '3.6', '3.7']
+        PY_VERSIONS = ['3.6', '3.7', '3.8']
         d = {}
         artifact_names = []
         for pl_key, pl_img in PLATFORMS.items():
