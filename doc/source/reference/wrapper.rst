@@ -16,7 +16,8 @@ C-API
 
     Prepare a plan for complex fft functions
 
-    :param size_t length: The input length for the plan
+    :param length: The input length for the plan
+    :type length size_t:
     :return: A C struct with plan data
     :rtype: cfft_plan
 
