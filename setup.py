@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from pathlib import Path
@@ -6,6 +7,11 @@ from distutils.extension import Extension
 from distutils.errors import CCompilerError
 
 USE_CYTHON = '--use-cython' in sys.argv
+
+RTFD_BUILD = 'READTHEDOCS' in os.environ.keys()
+if RTFD_BUILD:
+    USE_CYTHON = True
+
 if USE_CYTHON:
     sys.argv.remove('--use-cython')
     from Cython.Build import cythonize
