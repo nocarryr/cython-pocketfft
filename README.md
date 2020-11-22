@@ -6,7 +6,10 @@ A [Cython] wrapper for [PocketFFT]
 
 ## Links
 
-*TODO*
+* Documentation:
+  * https://cython-pocketfft.readthedocs.io/en/latest/
+* Source code:
+  * https://github.com/nocarryr/cython-pocketfft
 
 ## Usage
 
