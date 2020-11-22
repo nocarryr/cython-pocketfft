@@ -6,14 +6,17 @@ from setuptools import setup, find_packages
 from distutils.extension import Extension
 from distutils.errors import CCompilerError
 
-USE_CYTHON = '--use-cython' in sys.argv
-
 RTFD_BUILD = 'READTHEDOCS' in os.environ.keys()
-if RTFD_BUILD:
+
+if '--use-cython' in sys.argv:
     USE_CYTHON = True
+    sys.argv.remove('--use-cython')
+elif RTFD_BUILD:
+    USE_CYTHON = True
+else:
+    USE_CYTHON = False
 
 if USE_CYTHON:
-    sys.argv.remove('--use-cython')
     from Cython.Build import cythonize
 
 CYTHON_TRACE = '--cython-trace' in sys.argv
