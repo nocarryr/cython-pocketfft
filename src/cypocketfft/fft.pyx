@@ -21,6 +21,18 @@ def rfft_length(double[:] in_arr):
     """Calculate the rfft result length for the input array
 
     This evaluates to :math:`N / 2 + 1`
+
+    Parameters
+    ----------
+
+    in_arr: :c:type:`double` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (real-valued)
+
+    Returns
+    -------
+
+        Py_ssize_t:
+            Result length
     """
     return _rfft_length(in_arr)
 
@@ -34,6 +46,18 @@ def irfft_length(complex_t[:] in_arr):
     """Calculate the irfft result length for the input array
 
     This evaluates to :math:`(N - 1) * 2`
+
+    Parameters
+    ----------
+
+    in_arr: :c:type:`complex_t` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (complex-valued)
+
+    Returns
+    -------
+
+        Py_ssize_t:
+            Result length
     """
     return _irfft_length(in_arr)
 
@@ -152,14 +176,22 @@ cdef Py_ssize_t _cfft_with_plan(cfft_plan* plan, complex_t[:] in_arr, complex_t[
 
 
 def rfft(double[:] in_arr, fct=None):
-    """Perform the rfft
+    """Perform the rfft for real input
 
-    Arguments:
-        in_arr: Input array or typed-memoryview (real-valued)
-        fct: Scaling factor to apply to the un-normalized transform (typically ``1.0``)
+    Parameters
+    ----------
 
-    Returns:
-        The ifft result as a typed-memoryview of ``complex_t``
+    in_arr: :c:type:`double` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (real-valued)
+    fct: float, optional
+        Scaling factor to apply to the un-normalized transform. If not provided,
+        defaults to :math:`1.0`
+
+    Returns
+    -------
+
+        numpy.ndarray:
+            The rfft result as an :class:`array <numpy.ndarray>` of :class:`~numpy.complex128`
 
     """
     if fct is None:
@@ -174,12 +206,20 @@ def rfft(double[:] in_arr, fct=None):
 def irfft(complex_t[:] in_arr, fct=None):
     """Perform the inverse rfft
 
-    Arguments:
-        in_arr: Input array or typed-memoryview (complex-valued)
-        fct: Scaling factor to apply to the un-normalized transform (typically :math:`1.0 / N`)
+    Parameters
+    ----------
 
-    Returns:
-        The ifft result as a typed-memoryview of ``double``
+    in_arr: :c:type:`complex_t` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (complex-valued)
+    fct: float, optional
+        Scaling factor to apply to the un-normalized transform. If not provided,
+        defaults to :math:`1.0 / N`
+
+    Returns
+    -------
+
+        numpy.ndarray:
+            The irfft result as an :class:`array <numpy.ndarray>` of :class:`~numpy.float64`
 
     """
     out_size = _irfft_length(in_arr)
@@ -191,6 +231,24 @@ def irfft(complex_t[:] in_arr, fct=None):
     return out_arr
 
 def fft(complex_t[:] in_arr, fct=None):
+    """Perform the rfft for complex input
+
+    Parameters
+    ----------
+
+    in_arr: :c:type:`complex_t` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (complex-valued)
+    fct: float, optional
+        Scaling factor to apply to the un-normalized transform. If not provided,
+        defaults to :math:`1.0`
+
+    Returns
+    -------
+
+        numpy.ndarray:
+            The fft result as an :class:`array <numpy.ndarray>` of :class:`~numpy.complex128`
+
+    """
     if fct is None:
         fct = 1.0
     cdef double _fct = fct
@@ -200,6 +258,24 @@ def fft(complex_t[:] in_arr, fct=None):
     return np.asarray(out_arr)
 
 def ifft(complex_t[:] in_arr, fct=None):
+    """Perform the inverse fft
+
+    Parameters
+    ----------
+
+    in_arr: :c:type:`complex_t` :c:type:`[:] <pyx_memoryview>`
+        Input array or typed-memoryview (complex-valued)
+    fct: float, optional
+        Scaling factor to apply to the un-normalized transform. If not provided,
+        defaults to :math:`1.0 / N`
+
+    Returns
+    -------
+
+        numpy.ndarray:
+            The ifft result as an :class:`array <numpy.ndarray>` of :class:`~numpy.complex128`
+
+    """
     cdef Py_ssize_t length = in_arr.shape[0]
     if fct is None:
         fct = <double>(1 / <double>length)
