@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 from pathlib import Path
@@ -5,9 +6,17 @@ from setuptools import setup, find_packages
 from distutils.extension import Extension
 from distutils.errors import CCompilerError
 
-USE_CYTHON = '--use-cython' in sys.argv
-if USE_CYTHON:
+RTFD_BUILD = 'READTHEDOCS' in os.environ.keys()
+
+if '--use-cython' in sys.argv:
+    USE_CYTHON = True
     sys.argv.remove('--use-cython')
+elif RTFD_BUILD:
+    USE_CYTHON = True
+else:
+    USE_CYTHON = False
+
+if USE_CYTHON:
     from Cython.Build import cythonize
 
 CYTHON_TRACE = '--cython-trace' in sys.argv
@@ -145,6 +154,7 @@ if USE_CYTHON:
         compiler_directives={
             'embedsignature':True,
             'linetrace':CYTHON_TRACE,
+            'annotation_typing':False,
         },
     )
 else:
